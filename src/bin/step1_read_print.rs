@@ -1,8 +1,5 @@
-use std::io;
-use std::io::Write;
-
 extern crate mal;
-use mal::{types, printer, reader};
+use mal::{types, printer, reader, readline};
 
 fn read(string: &str) -> types::MalResult {
     reader::read_str(string)
@@ -23,14 +20,11 @@ fn rep(string: &str) -> Result<String, types::MalError> {
 }
 
 fn main() {
-    let input = &mut String::new();
+    let prompt = "user> ";
+    let mut input = String::new();
     'repl: loop {
-        input.clear();
-        print!("user> ");
-        io::stdout().flush().ok().expect("output error");
-        io::stdin().read_line(input)
-            .ok().expect("input : failed to read line");
-        match rep(input) {
+        readline::read_line(prompt, &mut input);
+        match rep(&input) {
             Ok(result) => println!("{}", result),
             Err(types::MalError::ErrEmptyLine) => continue,
             Err(types::MalError::ErrString(why)) => println!("error : {}", why),
