@@ -5,3 +5,6 @@ authors = ["pierreyoda <pierreyoda@users.noreply.github.com>"]
 
 [lib]
 name = "mal"
+
+[dependencies]
+regex = "0.1.*"
