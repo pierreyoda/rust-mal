@@ -1,0 +1,7 @@
+[package]
+name = "mal"
+version = "0.1.0"
+authors = ["pierreyoda <pierreyoda@users.noreply.github.com>"]
+
+[lib]
+name = "mal"
