@@ -16,6 +16,7 @@ impl super::types::MalType {
             Symbol(ref string) => string.clone(),
             List(ref seq) => pr_seq(seq, print_readably, "(", ")", " "),
             Vector(ref seq) => pr_seq(seq, print_readably, "[", "]", " "),
+            Function(ref data) => format!("{:?}", data),
         }
     }
 }

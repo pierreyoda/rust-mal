@@ -30,6 +30,4 @@ fn main() {
             Err(types::MalError::ErrString(why)) => println!("error : {}", why),
         }
     }
-
-    println!("Hello, world!");
 }

@@ -27,6 +27,4 @@ fn main() {
             .ok().expect("input : failed to read line");
         println!("{}", rep(input));
     }
-
-    println!("Hello, world!");
 }
