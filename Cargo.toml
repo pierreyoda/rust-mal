@@ -7,4 +7,5 @@ authors = ["pierreyoda <pierreyoda@users.noreply.github.com>"]
 name = "mal"
 
 [dependencies]
-regex = "0.1.*"
+regex = "0.1.38"
+log = "0.3.1"

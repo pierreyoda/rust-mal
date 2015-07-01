@@ -1,5 +1,5 @@
 extern crate mal;
-use mal::{types, printer, reader, readline};
+use mal::{types, reader, readline};
 
 fn read(string: &str) -> types::MalResult {
     reader::read_str(string)

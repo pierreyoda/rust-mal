@@ -1,6 +1,9 @@
 extern crate regex;
 macro_rules! mal_regex { ($re:expr) => { Regex::new($re).unwrap() } }
+#[macro_use]
+extern crate log;
 
+pub mod env;
 pub mod printer;
 pub mod reader;
 pub mod types;
