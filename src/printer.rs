@@ -17,6 +17,7 @@ impl super::types::MalType {
             List(ref seq) => pr_seq(seq, print_readably, "(", ")", " "),
             Vector(ref seq) => pr_seq(seq, print_readably, "[", "]", " "),
             Function(ref data) => format!("{:?}", data),
+            MalFunction(ref data) => format!("{:?}", data),
         }
     }
 }

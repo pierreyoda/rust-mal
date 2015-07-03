@@ -3,8 +3,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use super::types;
-use super::types::{MalValue, MalResult};
-use super::types::MalType::Symbol;
+use super::types::{MalValue, MalResult, new_list};
+use super::types::MalType::{Symbol, List, Vector};
 
 struct EnvData {
     data: HashMap<String, MalValue>,
@@ -63,5 +63,57 @@ pub fn get(env: &Env, key: &MalValue) -> MalResult {
             None      => types::err_string(format!("cannot find {}", symbol)),
         },
         _                  => types::err_str("env : cannot get with a non-symbol key"),
+    }
+}
+
+/// Bind the given lists on a key/value basis and return the new environment,
+/// with the given environment as its outer.
+/// The binding will be variadic if a '&' symbol is encountered in the bindings
+/// list ; in this case the next symbol in the bindings list is bound to the
+//  rest of the exprs.
+pub fn bind(outer: &Env, binds: MalValue, exprs: MalValue) -> Result<Env, String> {
+    let env = new(Some(outer.clone()));
+    let mut variadic_pos: Option<usize> = None;
+    match *binds {
+        List(ref binds_seq) | Vector(ref binds_seq) => {
+            match *exprs {
+                List(ref exprs_seq) | Vector(ref exprs_seq) => {
+                    for (i, bind) in binds_seq.iter().enumerate() {
+                        match **bind {
+                            Symbol(ref bind_key) => {
+                                if *bind_key == "&" {
+                                    variadic_pos = Some(i);
+                                    break;
+                                } else if i >= exprs_seq.len() {
+                                    return Err("not enough parameters for binding".into());
+                                }
+                                set(&env, bind.clone(), exprs_seq[i].clone());
+                            },
+                            _ => return Err("non-symbol bind".into()),
+                        }
+                    }
+                    match variadic_pos {
+                        Some(i) => {
+                            if i >= binds_seq.len() {
+                                return Err(concat!("missing a symbol after '&'",
+                                           " for variadic binding").into());
+                            }
+                            let ref vbind = binds_seq[i+1];
+                            match **vbind {
+                                Symbol(_) => {
+                                    set(&env, vbind.clone(),
+                                        new_list(exprs_seq[i..].to_vec()));
+                                },
+                                _ => return Err("non'symbol variadic binding".into()),
+                            }
+                        },
+                        None => (),
+                    }
+                    Ok(env)
+                },
+                _ => Err("env : exprs must be a list/vector".into()),
+            }
+        },
+        _ => Err("env : binds must be a list/vector".into()),
     }
 }

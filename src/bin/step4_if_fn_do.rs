@@ -1,7 +1,7 @@
 extern crate mal;
-use mal::{types, env, reader, readline};
-use mal::types::{MalValue, MalResult, MalError, new_symbol, new_function,
-        new_integer, err_str, err_string};
+use mal::{types, env, core, reader, readline};
+use mal::types::{MalValue, MalResult, MalError, new_symbol, new_list,
+        new_mal_function, err_str};
 use mal::types::MalType::*;
 
 fn read(string: &str) -> MalResult {
@@ -14,7 +14,7 @@ fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
         List(ref seq) | Vector(ref seq) => {
             let mut ast_ev = vec!();
             for value in seq {
-                ast_ev.push(try!(eval(value.clone(), env)));
+                ast_ev.push(try!(eval(value.clone(), env.clone())));
             }
             Ok(match *ast { List(_) => types::new_list(ast_ev),
                                  _  => types::new_vector(ast_ev)})
@@ -23,7 +23,7 @@ fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
     }
 }
 
-fn eval(ast: MalValue, env: &env::Env) -> MalResult {
+fn eval(ast: MalValue, env: env::Env) -> MalResult {
     let ast_temp = ast.clone();
     let (arg0_symbol, args): (Option<&str>, &Vec<MalValue>) = match *ast_temp {
         List(ref seq) => {
@@ -33,24 +33,45 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                 _                  => (None, seq),
             }
         },
-        _ => return eval_ast(ast, env)
+        _ => return eval_ast(ast, &env)
     };
 
 
     match arg0_symbol {
         Some(slice) => {
             match slice {
+                // (do items...) : evaluate all items and return the last one
+                "do" => {
+                    match *try!(eval_ast(new_list(args[1..].to_vec()), &env)) {
+                        List(ref seq) => return Ok(seq[seq.len()-1].clone()),
+                        _ => return err_str("invalid do call"),
+                    }
+                },
+                // (if condition if_condition_not_nil_or_false otherwise)
+                // if 'otherwise' is not provided, return nil if 'condition'
+                // evaluates to nil or false
+                "if" => {
+                    if args.len() < 3 || args.len() > 4 {
+                        return err_str("wrong arity for if, should be 3 or 4");
+                    }
+                    match *try!(eval(args[1].clone(), env.clone())) {
+                        False | Nil => return if args.len() == 4 {
+                            eval(args[3].clone(), env.clone()) } else {
+                                Ok(types::new_nil()) },
+                        _ => return eval(args[2].clone(), env.clone()),
+                    }
+                },
                 // (def! key value) ; key must be a Symbol
                 // bind the evaluated value in env with the unevaluated key
                 "def!" => {
                     if args.len() != 3 {
-                        return err_str("wrong arity for \"def!\", should be 2");
+                        return err_str("wrong arity for def!, should be 2");
                     }
                     let key = args[1].clone();
-                    let value = try!(eval(args[2].clone(), env));
+                    let value = try!(eval(args[2].clone(), env.clone()));
                     match *key {
                         Symbol(_) => {
-                            env::set(env, key, value.clone());
+                            env::set(&env, key, value.clone());
                             return Ok(value);
                         },
                         _         => {
@@ -79,7 +100,7 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                                 let expr = it.next().unwrap();
                                 match **key {
                                     Symbol(_) => {
-                                        let value = try!(eval(expr.clone(), &env_let));
+                                        let value = try!(eval(expr.clone(), env_let.clone()));
                                         env::set(&env_let, key.clone(), value);
                                     },
                                     _ => return err_str("non-symbol key in the let* binding list"),
@@ -88,8 +109,21 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                         },
                         _ => return err_str("let* with non-list binding"),
                     }
-                    return eval(args[2].clone(), &env_let);
+                    return eval(args[2].clone(), env_let.clone());
                 },
+                // (fn* (args...) exp)
+                "fn*" => {
+                    if args.len() != 3 {
+                        return err_str("wrong arity for fn*, should be 2");
+                    }
+                    let fn_args = args[1].clone();
+                    match *fn_args {
+                        List(_) => (),
+                        _ => return err_str("fn* with non-list arguments"),
+                    }
+                    return Ok(new_mal_function(self::eval, env.clone(),
+                              args[1].clone(), args[2].clone()));
+                }
         // otherwise : apply the first item to the other
                 _ => (),
             }
@@ -97,10 +131,10 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
         None => (),
     }
 
-    let list_ev = try!(eval_ast(ast.clone(), env));
+    let list_ev = try!(eval_ast(ast.clone(), &env));
     let items = match *list_ev {
         List(ref seq) => seq,
-        _             => return types::err_str("can only apply on a list"),
+        _             => return err_str("can only apply on a list"),
     };
     if items.len() == 0 { return Ok(list_ev.clone()); }
     let ref f = items[0];
@@ -113,53 +147,21 @@ fn print(expr: MalValue) -> String {
 
 fn rep(string: &str, env: &env::Env) -> Result<String, MalError> {
     let ast = try!(read(string.into()));
-    let expr = try!(eval(ast, env));
+    let expr = try!(eval(ast, env.clone()));
     Ok(print(expr))
-}
-
-fn int_op<F>(f: F, args: Vec<MalValue>) -> MalResult
-    where F: FnOnce(i32, i32) -> i32 {
-    if args.len() != 2 {
-        return err_string(
-            format!("wrong arity ({}) for operation between 2 integers",
-                    args.len()));
-    }
-    match *args[0] {
-        Integer(left) => match *args[1] {
-            Integer(right) => Ok(new_integer(f(left, right))),
-            _ => err_str("right argument must be an integer"),
-        },
-        _ => err_str("left argument must be an integer")
-    }
-}
-fn add(args: Vec<MalValue>) -> MalResult { int_op(|a, b| { a+b }, args) }
-fn sub(args: Vec<MalValue>) -> MalResult { int_op(|a, b| { a-b }, args) }
-fn mul(args: Vec<MalValue>) -> MalResult { int_op(|a, b| { a*b }, args) }
-
-fn div(args: Vec<MalValue>) -> MalResult {
-    if args.len() != 2 {
-        return err_string(format!(
-            "wrong arity ({}) for operation between 2 integers", args.len()));
-    }
-    match *args[0] {
-        Integer(left) => match *args[1] {
-            Integer(right) => {
-                if right == 0 { err_str("cannot divide by 0") }
-                else { Ok(types::new_integer(left / right)) }
-            },
-            _ => err_str("right argument must be an integer"),
-        },
-        _ => err_str("left argument must be an integer")
-    }
 }
 
 fn main() {
     // REPL environment
     let repl_env = env::new(None);
-    env::set(&repl_env, new_symbol("+".into()), new_function(add, Some(2), "+"));
-    env::set(&repl_env, new_symbol("-".into()), new_function(sub, Some(2), "-"));
-    env::set(&repl_env, new_symbol("*".into()), new_function(mul, Some(2), "*"));
-    env::set(&repl_env, new_symbol("/".into()), new_function(div, Some(2), "/"));
+    for (symbol_string, core_function_value) in core::ns() {
+        env::set(&repl_env, new_symbol(symbol_string), core_function_value);
+    }
+    match rep("(def! not (fn* (x) (if x false true)))", &repl_env) {
+        Ok(_) => (),
+        Err(MalError::ErrEmptyLine) => (),
+        Err(MalError::ErrString(why)) => panic!("MAL error : {}", why),
+    }
 
     // REPL
     let prompt = "user> ";

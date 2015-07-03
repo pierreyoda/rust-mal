@@ -100,10 +100,10 @@ fn div(args: Vec<MalValue>) -> MalResult {
 fn main() {
     // REPL environment
     let mut repl_env = Env::new();
-    repl_env.insert("+".into(), types::new_function(add, 2, "+"));
-    repl_env.insert("-".into(), types::new_function(sub, 2, "-"));
-    repl_env.insert("*".into(), types::new_function(mul, 2, "*"));
-    repl_env.insert("/".into(), types::new_function(div, 2, "/"));
+    repl_env.insert("+".into(), types::new_function(add, Some(2), "+"));
+    repl_env.insert("-".into(), types::new_function(sub, Some(2), "-"));
+    repl_env.insert("*".into(), types::new_function(mul, Some(2), "*"));
+    repl_env.insert("/".into(), types::new_function(div, Some(2), "/"));
 
     // REPL
     let prompt = "user> ";
