@@ -6,7 +6,7 @@ use super::types;
 use super::types::{MalValue, MalResult, new_list};
 use super::types::MalType::{Symbol, List, Vector};
 
-struct EnvData {
+pub struct EnvData {
     data: HashMap<String, MalValue>,
     outer: Option<Env>,
 }
