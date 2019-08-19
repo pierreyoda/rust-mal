@@ -14,7 +14,7 @@ fn print(expr: types::MalValue) -> String {
 }
 
 fn rep(string: &str) -> Result<String, types::MalError> {
-    let ast = read(string.into())?;
+    let ast = read(string)?;
     let expr = eval(ast)?;
     Ok(print(expr))
 }
@@ -22,7 +22,7 @@ fn rep(string: &str) -> Result<String, types::MalError> {
 fn main() {
     let prompt = "user> ";
     let mut input = String::new();
-    'repl: loop {
+    loop {
         readline::read_line(prompt, &mut input);
         match rep(&input) {
             Ok(result) => println!("{}", result),

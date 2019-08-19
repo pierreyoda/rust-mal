@@ -30,7 +30,7 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
     let ast_temp = ast.clone();
     let (arg0_symbol, args): (Option<&str>, &Vec<MalValue>) = match *ast_temp {
         List(ref seq) => {
-            if seq.len() == 0 {
+            if seq.is_empty() {
                 return Ok(ast);
             }
             match *seq[0] {
@@ -41,66 +41,63 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
         _ => return eval_ast(ast, env),
     };
 
-    match arg0_symbol {
-        Some(slice) => {
-            match slice {
-                // (def! key value) ; key must be a Symbol
-                // bind the evaluated value in env with the unevaluated key
-                "def!" => {
-                    if args.len() != 3 {
-                        return err_str("wrong arity for \"def!\", should be 2");
+    if let Some(slice) = arg0_symbol {
+        match slice {
+            // (def! key value) ; key must be a Symbol
+            // bind the evaluated value in env with the unevaluated key
+            "def!" => {
+                if args.len() != 3 {
+                    return err_str("wrong arity for \"def!\", should be 2");
+                }
+                let key = args[1].clone();
+                let value = eval(args[2].clone(), env)?;
+                match *key {
+                    Symbol(_) => {
+                        env::set(env, key, value.clone());
+                        return Ok(value);
                     }
-                    let key = args[1].clone();
-                    let value = eval(args[2].clone(), env)?;
-                    match *key {
-                        Symbol(_) => {
-                            env::set(env, key, value.clone());
-                            return Ok(value);
-                        }
-                        _ => {
-                            return err_str("def! with non-symbol as a key");
-                        }
+                    _ => {
+                        return err_str("def! with non-symbol as a key");
                     }
                 }
-                // (let* (key0 value0 key1 value1 ...) value)
-                // evaluate value in a temporary sub-environment where
-                // the given (key: Symbol / value: _) pairs are set
-                "let*" => {
-                    if args.len() != 3 {
-                        return err_str("wrong arity for \"let*\", should be 2");
-                    }
-                    let env_let = env::new(Some(env.clone()));
-                    let bindings = args[1].clone();
-                    match *bindings {
-                        List(ref bindings_seq) => {
-                            if bindings_seq.len() % 2 != 0 {
-                                return err_str(concat!(
-                                    "missing key or value ",
-                                    "in the let* binding list"
-                                ));
-                            }
-                            let mut it = bindings_seq.iter();
-                            while it.len() >= 2 {
-                                let key = it.next().unwrap();
-                                let expr = it.next().unwrap();
-                                match **key {
-                                    Symbol(_) => {
-                                        let value = eval(expr.clone(), &env_let)?;
-                                        env::set(&env_let, key.clone(), value);
-                                    }
-                                    _ => return err_str("non-symbol key in the let* binding list"),
-                                }
-                            }
-                        }
-                        _ => return err_str("let* with non-list binding"),
-                    }
-                    return eval(args[2].clone(), &env_let);
-                }
-                // otherwise : apply the first item to the other
-                _ => (),
             }
+            // (let* (key0 value0 key1 value1 ...) value)
+            // evaluate value in a temporary sub-environment where
+            // the given (key: Symbol / value: _) pairs are set
+            "let*" => {
+                if args.len() != 3 {
+                    return err_str("wrong arity for \"let*\", should be 2");
+                }
+                let env_let = env::new(Some(env.clone()));
+                let bindings = args[1].clone();
+                match *bindings {
+                    List(ref bindings_seq) => {
+                        if bindings_seq.len() % 2 != 0 {
+                            return err_str(concat!(
+                                "missing key or value ",
+                                "in the let* binding list"
+                            ));
+                        }
+                        let mut it = bindings_seq.iter();
+                        while it.len() >= 2 {
+                            let key = it.next().unwrap();
+                            let expr = it.next().unwrap();
+                            match **key {
+                                Symbol(_) => {
+                                    let value = eval(expr.clone(), &env_let)?;
+                                    env::set(&env_let, key.clone(), value);
+                                }
+                                _ => return err_str("non-symbol key in the let* binding list"),
+                            }
+                        }
+                    }
+                    _ => return err_str("let* with non-list binding"),
+                }
+                return eval(args[2].clone(), &env_let);
+            }
+            // otherwise : apply the first item to the other
+            _ => (),
         }
-        None => (),
     }
 
     let list_ev = eval_ast(ast.clone(), env)?;
@@ -108,10 +105,10 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
         List(ref seq) => seq,
         _ => return types::err_str("can only apply on a list"),
     };
-    if items.len() == 0 {
+    if items.is_empty() {
         return Ok(list_ev.clone());
     }
-    let ref f = items[0];
+    let f = &items[0];
     f.apply(items[1..].to_vec())
 }
 
@@ -120,7 +117,7 @@ fn print(expr: MalValue) -> String {
 }
 
 fn rep(string: &str, env: &env::Env) -> Result<String, MalError> {
-    let ast = read(string.into())?;
+    let ast = read(string)?;
     let expr = eval(ast, env)?;
     Ok(print(expr))
 }
@@ -202,7 +199,7 @@ fn main() {
     // REPL
     let prompt = "user> ";
     let mut input = String::new();
-    'repl: loop {
+    loop {
         readline::read_line(prompt, &mut input);
         match rep(&input, &repl_env) {
             Ok(result) => println!("{}", result),
