@@ -14,8 +14,8 @@ fn print(expr: types::MalValue) -> String {
 }
 
 fn rep(string: &str) -> Result<String, types::MalError> {
-    let ast = try!(read(string.into()));
-    let expr = try!(eval(ast));
+    let ast = r#try!(read(string.into()));
+    let expr = r#try!(eval(ast));
     Ok(print(expr))
 }
 

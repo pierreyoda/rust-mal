@@ -14,7 +14,7 @@ fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
         List(ref seq) | Vector(ref seq) => {
             let mut ast_ev = vec!();
             for value in seq {
-                ast_ev.push(try!(eval(value.clone(), env)));
+                ast_ev.push(r#try!(eval(value.clone(), env)));
             }
             Ok(match *ast { List(_) => types::new_list(ast_ev),
                                  _  => types::new_vector(ast_ev)})
@@ -47,7 +47,7 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                         return err_str("wrong arity for \"def!\", should be 2");
                     }
                     let key = args[1].clone();
-                    let value = try!(eval(args[2].clone(), env));
+                    let value = r#try!(eval(args[2].clone(), env));
                     match *key {
                         Symbol(_) => {
                             env::set(env, key, value.clone());
@@ -79,7 +79,7 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                                 let expr = it.next().unwrap();
                                 match **key {
                                     Symbol(_) => {
-                                        let value = try!(eval(expr.clone(), &env_let));
+                                        let value = r#try!(eval(expr.clone(), &env_let));
                                         env::set(&env_let, key.clone(), value);
                                     },
                                     _ => return err_str("non-symbol key in the let* binding list"),
@@ -97,7 +97,7 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
         None => (),
     }
 
-    let list_ev = try!(eval_ast(ast.clone(), env));
+    let list_ev = r#try!(eval_ast(ast.clone(), env));
     let items = match *list_ev {
         List(ref seq) => seq,
         _             => return types::err_str("can only apply on a list"),
@@ -112,8 +112,8 @@ fn print(expr: MalValue) -> String {
 }
 
 fn rep(string: &str, env: &env::Env) -> Result<String, MalError> {
-    let ast = try!(read(string.into()));
-    let expr = try!(eval(ast, env));
+    let ast = r#try!(read(string.into()));
+    let expr = r#try!(eval(ast, env));
     Ok(print(expr))
 }
 
