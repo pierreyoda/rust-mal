@@ -113,10 +113,11 @@ where
     }
     match *args[0] {
         Integer(left) => match *args[1] {
-            Integer(right) => match f(left, right) {
-                true => Ok(new_true()),
-                false => Ok(new_false()),
-            },
+            Integer(right) => Ok(if f(left, right) {
+                new_true()
+            } else {
+                new_false()
+            }),
             _ => err_str("right argument must be an integer"),
         },
         _ => err_str("left argument must be an integer"),

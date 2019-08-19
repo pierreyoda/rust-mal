@@ -18,7 +18,7 @@ pub type Env = Rc<RefCell<EnvData>>;
 pub fn new(outer: Option<Env>) -> Env {
     Rc::new(RefCell::new(EnvData {
         data: HashMap::new(),
-        outer: outer,
+        outer,
     }))
 }
 
@@ -97,24 +97,20 @@ pub fn bind(outer: &Env, binds: MalValue, exprs: MalValue) -> Result<Env, String
                         _ => return Err("non-symbol bind".into()),
                     }
                 }
-                match variadic_pos {
-                    Some(i) => {
-                        if i >= binds_seq.len() {
-                            return Err(concat!(
-                                "missing a symbol after '&'",
-                                " for variadic binding"
-                            )
-                            .into());
-                        }
-                        let ref vbind = binds_seq[i + 1];
-                        match **vbind {
-                            Symbol(_) => {
-                                set(&env, vbind.clone(), new_list(exprs_seq[i..].to_vec()));
-                            }
-                            _ => return Err("non'symbol variadic binding".into()),
-                        }
+
+                if let Some(i) = variadic_pos {
+                    if i >= binds_seq.len() {
+                        return Err(
+                            concat!("missing a symbol after '&'", " for variadic binding").into(),
+                        );
                     }
-                    None => (),
+                    let vbind = &binds_seq[i + 1];
+                    match **vbind {
+                        Symbol(_) => {
+                            set(&env, vbind.clone(), new_list(exprs_seq[i..].to_vec()));
+                        }
+                        _ => return Err("non'symbol variadic binding".into()),
+                    }
                 }
                 Ok(env)
             }

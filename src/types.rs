@@ -166,9 +166,9 @@ pub fn new_function(
     name: &'static str,
 ) -> MalValue {
     Rc::new(Function(FunctionData {
-        function: function,
-        arity: arity,
-        name: name,
+        function,
+        arity,
+        name,
     }))
 }
 pub fn new_mal_function(
@@ -178,9 +178,9 @@ pub fn new_mal_function(
     exp: MalValue,
 ) -> MalValue {
     Rc::new(MalFunction(MalFunctionData {
-        eval: eval,
-        env: env,
-        args: args,
-        exp: exp,
+        eval,
+        env,
+        args,
+        exp,
     }))
 }

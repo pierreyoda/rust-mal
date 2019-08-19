@@ -7,11 +7,11 @@ use super::types::{err_str, MalError, MalResult, MalValue};
 
 pub fn read_str(string: &str) -> MalResult {
     let tokens = tokenize(string);
-    if tokens.len() == 0 {
+    if tokens.is_empty() {
         Err(MalError::ErrEmptyLine)
     } else {
         let mut reader = MalReader {
-            tokens: tokens,
+            tokens,
             position: 0,
         };
         read_form(&mut reader)
@@ -45,7 +45,7 @@ impl MalReader {
     }
 }
 
-const MATCH_TOKEN_PCRE: &'static str =
+const MATCH_TOKEN_PCRE: &str =
     r#"[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*)"#;
 
 /// Construct the 'Vec' containing the tokens in the given string.
@@ -57,7 +57,7 @@ fn tokenize(string: &str) -> Vec<String> {
         if group == "" {
             break;
         }
-        if group.starts_with(";") {
+        if group.starts_with(';') {
             continue;
         }
         tokens.push(group.to_string());
@@ -108,9 +108,9 @@ fn read_seq(reader: &mut MalReader, start: &str, end: &str) -> Result<Vec<MalVal
                 None
             }
         }
-        None => Some(format!("read_seq underflow")),
+        None => Some("read_seq underflow".into()),
     };
-    if !oerror.is_none() {
+    if oerror.is_some() {
         return Err(MalError::ErrString(oerror.unwrap()));
     }
     let mut seq: Vec<MalValue> = vec![];
@@ -133,9 +133,9 @@ fn read_seq(reader: &mut MalReader, start: &str, end: &str) -> Result<Vec<MalVal
 }
 
 fn read_list(reader: &mut MalReader) -> MalResult {
-    read_seq(reader, "(", ")").map(|seq| types::new_list(seq))
+    read_seq(reader, "(", ")").map(types::new_list)
 }
 
 fn read_vector(reader: &mut MalReader) -> MalResult {
-    read_seq(reader, "[", "]").map(|seq| types::new_vector(seq))
+    read_seq(reader, "[", "]").map(types::new_vector)
 }

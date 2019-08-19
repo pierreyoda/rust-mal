@@ -27,7 +27,7 @@ impl fmt::Debug for super::types::MalType {
     }
 }
 
-fn pr_seq(seq: &Vec<MalValue>, print_readably: bool, start: &str, end: &str, sep: &str) -> String {
+fn pr_seq(seq: &[MalValue], print_readably: bool, start: &str, end: &str, sep: &str) -> String {
     let mut string = String::new();
     string.push_str(start);
 
