@@ -1,12 +1,5 @@
-[package]
-name = "mal"
-version = "0.1.0"
-authors = ["pierreyoda <pierreyoda@users.noreply.github.com>"]
-
-[lib]
-name = "mal"
-path = "src/lib.rs"
-
-[dependencies]
-regex = "1.2.1"
-log = "0.4.8"
+[workspace]
+members = [
+    "rust_mal_lib",
+    "rust_mal_steps"
+]

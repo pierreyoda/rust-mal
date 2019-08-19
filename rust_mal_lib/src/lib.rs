@@ -4,6 +4,7 @@ macro_rules! mal_regex {
         Regex::new($re).unwrap()
     };
 }
+
 #[macro_use]
 extern crate log;
 

@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-extern crate mal;
-use mal::types::MalType::*;
-use mal::types::{MalError, MalResult, MalValue};
-use mal::{reader, readline, types};
+use rust_mal_lib::types::MalType::*;
+use rust_mal_lib::types::{MalError, MalResult, MalValue};
+use rust_mal_lib::{reader, readline, types};
 
 pub type Env = HashMap<String, MalValue>;
 
