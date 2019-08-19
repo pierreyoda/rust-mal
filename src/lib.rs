@@ -1,5 +1,9 @@
 extern crate regex;
-macro_rules! mal_regex { ($re:expr) => { Regex::new($re).unwrap() } }
+macro_rules! mal_regex {
+    ($re:expr) => {
+        Regex::new($re).unwrap()
+    };
+}
 #[macro_use]
 extern crate log;
 
@@ -17,7 +21,9 @@ pub mod readline {
         input.clear();
         print!("{}", prompt);
         io::stdout().flush().ok().expect("readline : output error");
-        io::stdin().read_line(input)
-            .ok().expect("readline : failed to read line");
+        io::stdin()
+            .read_line(input)
+            .ok()
+            .expect("readline : failed to read line");
     }
 }

@@ -1,9 +1,8 @@
 /// Module allowing to display an AST of 'MalValue'.
-
 use std::fmt;
 
-use super::types::MalValue;
 use super::types::MalType::*;
+use super::types::MalValue;
 
 impl super::types::MalType {
     pub fn pr_str(&self, print_readably: bool) -> String {
@@ -28,15 +27,17 @@ impl fmt::Debug for super::types::MalType {
     }
 }
 
-fn pr_seq(seq: &Vec<MalValue>, print_readably: bool,
-           start: &str, end: &str, sep: &str) -> String {
+fn pr_seq(seq: &Vec<MalValue>, print_readably: bool, start: &str, end: &str, sep: &str) -> String {
     let mut string = String::new();
     string.push_str(start);
 
     let mut first = true;
     for value in seq {
-        if first { first = false; }
-        else { string.push_str(sep); }
+        if first {
+            first = false;
+        } else {
+            string.push_str(sep);
+        }
         string.push_str(&value.pr_str(print_readably)[..])
     }
 

@@ -23,8 +23,10 @@ fn main() {
         input.clear();
         print!("user> ");
         io::stdout().flush().ok().expect("output error");
-        io::stdin().read_line(input)
-            .ok().expect("input : failed to read line");
+        io::stdin()
+            .read_line(input)
+            .ok()
+            .expect("input : failed to read line");
         println!("{}", rep(input));
     }
 }
