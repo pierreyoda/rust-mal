@@ -14,7 +14,7 @@ fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
         List(ref seq) | Vector(ref seq) => {
             let mut ast_ev = vec!();
             for value in seq {
-                ast_ev.push(r#try!(eval(value.clone(), env.clone())));
+                ast_ev.push(eval(value.clone(), env.clone())?);
             }
             Ok(match *ast { List(_) => types::new_list(ast_ev),
                                  _  => types::new_vector(ast_ev)})
@@ -42,7 +42,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
             match slice {
                 // (do items...) : evaluate all items and return the last one
                 "do" => {
-                    match *r#try!(eval_ast(new_list(args[1..].to_vec()), &env)) {
+                    match *eval_ast(new_list(args[1..].to_vec()), &env)? {
                         List(ref seq) => return Ok(seq[seq.len()-1].clone()),
                         _ => return err_str("invalid do call"),
                     }
@@ -54,7 +54,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
                     if args.len() < 3 || args.len() > 4 {
                         return err_str("wrong arity for if, should be 3 or 4");
                     }
-                    match *r#try!(eval(args[1].clone(), env.clone())) {
+                    match *eval(args[1].clone(), env.clone())? {
                         False | Nil => return if args.len() == 4 {
                             eval(args[3].clone(), env.clone()) } else {
                                 Ok(types::new_nil()) },
@@ -68,7 +68,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
                         return err_str("wrong arity for def!, should be 2");
                     }
                     let key = args[1].clone();
-                    let value = r#try!(eval(args[2].clone(), env.clone()));
+                    let value = eval(args[2].clone(), env.clone())?;
                     match *key {
                         Symbol(_) => {
                             env::set(&env, key, value.clone());
@@ -100,7 +100,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
                                 let expr = it.next().unwrap();
                                 match **key {
                                     Symbol(_) => {
-                                        let value = r#try!(eval(expr.clone(), env_let.clone()));
+                                        let value = eval(expr.clone(), env_let.clone())?;
                                         env::set(&env_let, key.clone(), value);
                                     },
                                     _ => return err_str("non-symbol key in the let* binding list"),
@@ -131,7 +131,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
         None => (),
     }
 
-    let list_ev = r#try!(eval_ast(ast.clone(), &env));
+    let list_ev = eval_ast(ast.clone(), &env)?;
     let items = match *list_ev {
         List(ref seq) => seq,
         _             => return err_str("can only apply on a list"),
@@ -146,8 +146,8 @@ fn print(expr: MalValue) -> String {
 }
 
 fn rep(string: &str, env: &env::Env) -> Result<String, MalError> {
-    let ast = r#try!(read(string.into()));
-    let expr = r#try!(eval(ast, env.clone()));
+    let ast = read(string.into())?;
+    let expr = eval(ast, env.clone())?;
     Ok(print(expr))
 }
 
