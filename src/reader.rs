@@ -51,7 +51,7 @@ fn tokenize(string: &str) -> Vec<String> {
     let mut tokens = vec!();
     let re = mal_regex!(MATCH_TOKEN_PCRE);
     for caps in re.captures_iter(string) {
-        let group = caps.at(1).unwrap_or("");
+        let group = &caps[1];
         if group == "" { break; }
         if group.starts_with(";") { continue; }
         tokens.push(group.to_string());

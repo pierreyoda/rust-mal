@@ -5,7 +5,8 @@ authors = ["pierreyoda <pierreyoda@users.noreply.github.com>"]
 
 [lib]
 name = "mal"
+path = "src/lib.rs"
 
 [dependencies]
-regex = "0.1.38"
-log = "0.3.1"
+regex = "1.2.1"
+log = "0.4.8"
