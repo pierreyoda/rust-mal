@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "rust_mal_lib",
+    "rust_mal_lib_wasm",
     "rust_mal_steps"
 ]
