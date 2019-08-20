@@ -1,6 +1,6 @@
 use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{
-    err_str, new_list, new_mal_function, new_symbol, MalError, MalResult, MalValue,
+    err_str, new_list, new_mal_function, new_symbol, MalError, MalResult, MalValue, new_function, new_str
 };
 use rust_mal_lib::{core, env, reader, readline, types};
 
@@ -161,21 +161,21 @@ fn rep(string: &str, env: &env::Env) -> Result<String, MalError> {
     Ok(print(expr))
 }
 
-fn main() {
-    // REPL environment
+fn create_repl_env() -> Result<env::Env, MalError> {
     let repl_env = env::new(None);
     for (symbol_string, core_function_value) in core::ns() {
         env::set(&repl_env, new_symbol(symbol_string), core_function_value);
     }
-    match rep("(def! not (fn* (x) (if x false true)))", &repl_env) {
-        Ok(_) => (),
-        Err(MalError::ErrEmptyLine) => (),
-        Err(MalError::ErrString(why)) => panic!("MAL error : {}", why),
-    }
+    // let prn = |v: Vec<MalValue>| Ok(print(v[0]));
+    env::set(&repl_env, new_symbol("prn".into()), new_function(|v: Vec<MalValue>| Ok(new_str(print(v[0].clone()))), Some(1), "prn"));
+    rep("(def! not (fn* (x) (if x false true)))", &repl_env)?;
+    Ok(repl_env)
+}
 
-    // REPL
+fn main() {
     let prompt = "user> ";
     let mut input = String::new();
+    let repl_env = create_repl_env().unwrap();
     loop {
         readline::read_line(prompt, &mut input);
         match rep(&input, &repl_env) {
@@ -183,5 +183,18 @@ fn main() {
             Err(MalError::ErrEmptyLine) => continue,
             Err(MalError::ErrString(why)) => println!("error : {}", why),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{create_repl_env, rep};
+    use rust_mal_steps::spec::{checker::check_against_mal_spec, parser::load_and_parse_mal_spec};
+
+    #[test]
+    fn test_step4_spec() {
+        let lines = load_and_parse_mal_spec("step4_repl.mal").unwrap();
+        let env = create_repl_env().unwrap();
+        check_against_mal_spec(&lines, &env, &rep).unwrap();
     }
 }

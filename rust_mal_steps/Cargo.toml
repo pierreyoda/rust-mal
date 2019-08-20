@@ -4,5 +4,8 @@ version = "0.4.0"
 authors = ["pierreyoda <pierreyoda@users.noreply.github.com>"]
 edition = "2018"
 
+[lib]
+path = "src/lib.rs"
+
 [dependencies]
 rust-mal-lib = { path = "../rust_mal_lib" }

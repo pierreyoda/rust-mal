@@ -171,8 +171,7 @@ fn div(args: Vec<MalValue>) -> MalResult {
     }
 }
 
-fn main() {
-    // REPL environment
+fn create_repl_env() -> env::Env {
     let repl_env = env::new(None);
     env::set(
         &repl_env,
@@ -194,10 +193,13 @@ fn main() {
         new_symbol("/".into()),
         new_function(div, Some(2), "/"),
     );
+    repl_env
+}
 
-    // REPL
+fn main() {
     let prompt = "user> ";
     let mut input = String::new();
+    let repl_env = create_repl_env();
     loop {
         readline::read_line(prompt, &mut input);
         match rep(&input, &repl_env) {
@@ -205,5 +207,18 @@ fn main() {
             Err(MalError::ErrEmptyLine) => continue,
             Err(MalError::ErrString(why)) => println!("error : {}", why),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{create_repl_env, rep};
+    use rust_mal_steps::spec::{checker::check_against_mal_spec, parser::load_and_parse_mal_spec};
+
+    #[test]
+    fn test_step3_spec() {
+        let lines = load_and_parse_mal_spec("step3_repl.mal").unwrap();
+        let env = create_repl_env();
+        // check_against_mal_spec(&lines, &env, &rep).unwrap();
     }
 }
