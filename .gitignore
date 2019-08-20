@@ -5,9 +5,7 @@
 *.dll
 
 # Project files
-*.sublime-workspace
-*.sublime-project
-*.cmd
+.vscode
 
 # Executables
 *.exe

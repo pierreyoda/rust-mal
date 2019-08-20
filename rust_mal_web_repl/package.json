@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "export": "next build && next export"
   },
   "dependencies": {
     "next": "9.0.4",
@@ -15,6 +16,11 @@
     "rust-mal-lib-wasm": "../rust_mal_lib_wasm/pkg"
   },
   "devDependencies": {
-    "@wasm-tool/wasm-pack-plugin": "^1.0.0"
+    "@types/node": "^12.7.2",
+    "@wasm-tool/wasm-pack-plugin": "^1.0.0",
+    "typescript": "^3.5.3"
+  },
+  "browser": {
+    "child_process": false
   }
 }
