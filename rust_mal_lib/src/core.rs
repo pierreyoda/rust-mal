@@ -45,6 +45,7 @@ fn empty_q(args: Vec<MalValue>) -> MalResult {
 fn count(args: Vec<MalValue>) -> MalResult {
     match *args[0] {
         List(ref seq) | Vector(ref seq) => Ok(new_integer(seq.len() as i32)),
+        Nil => Ok(new_integer(0)),
         _ => err_str("count called on non-list/vector"),
     }
 }
