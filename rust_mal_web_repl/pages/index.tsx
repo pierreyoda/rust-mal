@@ -13,10 +13,12 @@ const Home: NextPage<{ rustMessage: string }> = ({ rustMessage }) => (
     <div className="hero">
       <h1 className="title">Welcome to Next.js!</h1>
       <p className="description">
-        Hello from Rust: <code>{rustMessage}</code> \o/
-    </p>
+        Hello from Rust:
+        <code>{rustMessage}</code>
+      </p>
     </div>
-    <style jsx>{`
+    <style jsx>
+      {`
     .hero {
       width: 100%;
       color: #333;
@@ -32,13 +34,14 @@ const Home: NextPage<{ rustMessage: string }> = ({ rustMessage }) => (
     .description {
       text-align: center;
     }
-  `}</style>
+  `}
+    </style>
   </div>
 );
 
 Home.getInitialProps = async () => {
-    const { greet } = await import("../../rust_mal_lib_wasm/pkg");
-    return { rustMessage: greet() };
+  const { greet } = await import("../../rust_mal_lib_wasm/pkg");
+  return { rustMessage: greet() };
 };
 
 export default Home;
