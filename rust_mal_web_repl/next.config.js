@@ -4,6 +4,13 @@ const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 module.exports = () => ({
   webpack: config => ({
     ...config,
+    resolve: {
+      ...config.resolve,
+      alias: {
+        ...config.resolve.alias,
+        "@": path.resolve(__dirname, "./"),
+      },
+    },
     plugins: [
       ...config.plugins,
       new WasmPackPlugin({

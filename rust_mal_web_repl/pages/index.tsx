@@ -1,22 +1,13 @@
 import React from "react";
-import Head from "next/head";
 import { NextPage } from "next";
 
-import Nav from "../components/nav";
-
 const Home: NextPage<{ rustMessage: string }> = ({ rustMessage }) => (
-  <div>
-    <Head>
-      <title>Home</title>
-    </Head>
-    <Nav />
-    <div className="hero">
-      <h1 className="title">Welcome to Next.js!</h1>
-      <p className="description">
-        Hello from Rust:
-        <code>{rustMessage}</code>
-      </p>
-    </div>
+  <div className="hero">
+    <h1 className="title">Welcome to Next.js!</h1>
+    <p className="description">
+      Hello from Rust:
+      <code>{rustMessage}</code>
+    </p>
     <style jsx>
       {`
     .hero {
