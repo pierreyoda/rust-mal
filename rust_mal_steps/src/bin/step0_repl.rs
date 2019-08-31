@@ -40,6 +40,6 @@ mod tests {
     fn test_step0_spec() {
         let lines = load_and_parse_mal_spec("step0_repl.mal").unwrap();
         let env = env::new(None);
-        check_against_mal_spec(&lines, &env, &|input, _| Ok(rep(input))).unwrap();
+        check_against_mal_spec(&lines, env, &|input, _| Ok(rep(input))).unwrap();
     }
 }

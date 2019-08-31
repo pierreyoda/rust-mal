@@ -1,14 +1,15 @@
 use super::MalTestingLine;
 
-use rust_mal_lib::{env, types::MalError};
+use rust_mal_lib::{env::Environment, types::MalError};
 
-pub fn check_against_mal_spec<ReadEvalPrint>(
-    lines: &Vec<MalTestingLine>,
-    env: &env::Env,
-    rep: &ReadEvalPrint,
+pub fn check_against_mal_spec<E, REP>(
+    lines: &[MalTestingLine],
+    mut env: E,
+    rep: &REP,
 ) -> Result<(), MalError>
 where
-    ReadEvalPrint: Fn(&str, &env::Env) -> Result<String, MalError>,
+    E: Environment,
+    REP: Fn(&str, &mut E) -> Result<String, MalError>,
 {
     let mut optional = false;
     let mut current_section = String::new();
@@ -20,14 +21,13 @@ where
                 println!("> starting section: {}", current_section);
             }
             MalTestingLine::InputShouldOutput(inputs, expected) => {
-                let inner_env = env::new(Some(env.clone()));
                 let mut output = String::new();
                 if optional {
                     println!("###optional###");
                 }
                 for input in inputs {
                     println!("#{}", input);
-                    output = rep(input, &inner_env)?;
+                    output = rep(input, &mut env)?;
                     println!(">{}", output);
                 }
                 let matches = output == *expected;
@@ -37,10 +37,7 @@ where
                 //     output, expected, input
                 // );
                 if !matches {
-                    println!(
-                        "\n{}\nSHOULD BE\n{}\n",
-                        output, expected
-                    );
+                    println!("\n{}\nSHOULD BE\n{}\n", output, expected);
                 }
             }
         }

@@ -1,16 +1,21 @@
 use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{
-    err_str, new_list, new_mal_function, new_symbol, MalError, MalResult, MalValue, new_function, new_str
+    err_str, new_function, new_list, new_mal_function, new_str, new_symbol, MalError, MalResult,
+    MalValue,
 };
-use rust_mal_lib::{core, env, reader, readline, types};
+use rust_mal_lib::{
+    core,
+    env::{Env, Environment},
+    reader, readline, types,
+};
 
 fn read(string: &str) -> MalResult {
     reader::read_str(string)
 }
 
-fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
+fn eval_ast(ast: MalValue, env: &Env) -> MalResult {
     match *ast {
-        Symbol(_) => env::get(&env, &ast),
+        Symbol(_) => env.get_env_value(&ast),
         List(ref seq) | Vector(ref seq) => {
             let mut ast_ev = vec![];
             for value in seq {
@@ -25,7 +30,7 @@ fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
     }
 }
 
-fn eval(ast: MalValue, env: env::Env) -> MalResult {
+fn eval(ast: MalValue, mut env: Env) -> MalResult {
     let ast_temp = ast.clone();
     let (arg0_symbol, args): (Option<&str>, &Vec<MalValue>) = match *ast_temp {
         List(ref seq) => {
@@ -75,7 +80,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
                 let value = eval(args[2].clone(), env.clone())?;
                 match *key {
                     Symbol(_) => {
-                        env::set(&env, key, value.clone());
+                        env.set_env_value(key, value.clone());
                         return Ok(value);
                     }
                     _ => {
@@ -90,7 +95,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
                 if args.len() != 3 {
                     return err_str("wrong arity for \"let*\", should be 2");
                 }
-                let env_let = env::new(Some(env.clone()));
+                let mut env_let: Env = Environment::new(Some(&env));
                 let bindings = args[1].clone();
                 match *bindings {
                     List(ref bindings_seq) => {
@@ -107,7 +112,7 @@ fn eval(ast: MalValue, env: env::Env) -> MalResult {
                             match **key {
                                 Symbol(_) => {
                                     let value = eval(expr.clone(), env_let.clone())?;
-                                    env::set(&env_let, key.clone(), value);
+                                    env_let.set_env_value(key.clone(), value);
                                 }
                                 _ => return err_str("non-symbol key in the let* binding list"),
                             }
@@ -155,19 +160,25 @@ fn print(expr: MalValue) -> String {
     expr.pr_str(true)
 }
 
-fn rep(string: &str, env: &env::Env) -> Result<String, MalError> {
+fn rep(string: &str, env: &Env) -> Result<String, MalError> {
     let ast = read(string)?;
     let expr = eval(ast, env.clone())?;
     Ok(print(expr))
 }
 
-fn create_repl_env() -> Result<env::Env, MalError> {
-    let repl_env = env::new(None);
+fn create_repl_env() -> Result<Env, MalError> {
+    let mut repl_env: Env = Environment::new(None);
     for (symbol_string, core_function_value) in core::ns() {
-        env::set(&repl_env, new_symbol(symbol_string), core_function_value);
+        repl_env.set_env_value(new_symbol(symbol_string), core_function_value);
     }
-    // let prn = |v: Vec<MalValue>| Ok(print(v[0]));
-    env::set(&repl_env, new_symbol("prn".into()), new_function(|v: Vec<MalValue>| Ok(new_str(print(v[0].clone()))), Some(1), "prn"));
+    repl_env.set_env_value(
+        new_symbol("prn".into()),
+        new_function(
+            |v: Vec<MalValue>| Ok(new_str(print(v[0].clone()))),
+            Some(1),
+            "prn",
+        ),
+    );
     rep("(def! not (fn* (x) (if x false true)))", &repl_env)?;
     Ok(repl_env)
 }
@@ -195,6 +206,6 @@ mod tests {
     fn test_step4_spec() {
         let lines = load_and_parse_mal_spec("step4_repl.mal").unwrap();
         let env = create_repl_env().unwrap();
-        check_against_mal_spec(&lines, &env, &rep).unwrap();
+        check_against_mal_spec(&lines, env, &|input, env| rep(input, env)).unwrap();
     }
 }

@@ -1,3 +1,4 @@
+use rust_mal_lib::env::Environment;
 use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{
     err_str, err_string, new_function, new_integer, new_symbol, MalError, MalResult, MalValue,
@@ -8,9 +9,9 @@ fn read(string: &str) -> MalResult {
     reader::read_str(string)
 }
 
-fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
+fn eval_ast(ast: MalValue, env: &mut impl Environment) -> MalResult {
     match *ast {
-        Symbol(_) => env::get(&env, &ast),
+        Symbol(_) => env.get_env_value(&ast),
         List(ref seq) | Vector(ref seq) => {
             let mut ast_ev = vec![];
             for value in seq {
@@ -25,7 +26,7 @@ fn eval_ast(ast: MalValue, env: &env::Env) -> MalResult {
     }
 }
 
-fn eval(ast: MalValue, env: &env::Env) -> MalResult {
+fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
     let ast_temp = ast.clone();
     let (arg0_symbol, args): (Option<&str>, &Vec<MalValue>) = match *ast_temp {
         List(ref seq) => {
@@ -52,7 +53,8 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                 let value = eval(args[2].clone(), env)?;
                 match *key {
                     Symbol(_) => {
-                        env::set(env, key, value.clone());
+                        println!("deffffffff {:?} {:?}", key, value);
+                        env.set_env_value(key, value.clone());
                         return Ok(value);
                     }
                     _ => {
@@ -67,7 +69,7 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                 if args.len() != 3 {
                     return err_str("wrong arity for \"let*\", should be 2");
                 }
-                let env_let = env::new(Some(env.clone()));
+                let mut env_let = env.new_inner();
                 let bindings = args[1].clone();
                 match *bindings {
                     List(ref bindings_seq) => {
@@ -83,8 +85,8 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                             let expr = it.next().unwrap();
                             match **key {
                                 Symbol(_) => {
-                                    let value = eval(expr.clone(), &env_let)?;
-                                    env::set(&env_let, key.clone(), value);
+                                    let value = eval(expr.clone(), &mut env_let)?;
+                                    env_let.set_env_value(key.clone(), value);
                                 }
                                 _ => return err_str("non-symbol key in the let* binding list"),
                             }
@@ -92,7 +94,7 @@ fn eval(ast: MalValue, env: &env::Env) -> MalResult {
                     }
                     _ => return err_str("let* with non-list binding"),
                 }
-                return eval(args[2].clone(), &env_let);
+                return eval(args[2].clone(), &mut env_let);
             }
             // otherwise : apply the first item to the other
             _ => (),
@@ -115,7 +117,7 @@ fn print(expr: MalValue) -> String {
     expr.pr_str(true)
 }
 
-fn rep(string: &str, env: &env::Env) -> Result<String, MalError> {
+fn rep(string: &str, env: &mut impl Environment) -> Result<String, MalError> {
     let ast = read(string)?;
     let expr = eval(ast, env)?;
     Ok(print(expr))
@@ -172,37 +174,22 @@ fn div(args: Vec<MalValue>) -> MalResult {
 }
 
 fn create_repl_env() -> env::Env {
-    let repl_env = env::new(None);
-    env::set(
-        &repl_env,
-        new_symbol("+".into()),
-        new_function(add, Some(2), "+"),
-    );
-    env::set(
-        &repl_env,
-        new_symbol("-".into()),
-        new_function(sub, Some(2), "-"),
-    );
-    env::set(
-        &repl_env,
-        new_symbol("*".into()),
-        new_function(mul, Some(2), "*"),
-    );
-    env::set(
-        &repl_env,
-        new_symbol("/".into()),
-        new_function(div, Some(2), "/"),
-    );
+    let mut repl_env = env::new(None);
+    repl_env
+        .set_env_value(new_symbol("+".into()), new_function(add, Some(2), "+"))
+        .set_env_value(new_symbol("-".into()), new_function(sub, Some(2), "-"))
+        .set_env_value(new_symbol("*".into()), new_function(mul, Some(2), "*"))
+        .set_env_value(new_symbol("/".into()), new_function(div, Some(2), "/"));
     repl_env
 }
 
 fn main() {
     let prompt = "user> ";
     let mut input = String::new();
-    let repl_env = create_repl_env();
+    let mut repl_env = create_repl_env();
     loop {
         readline::read_line(prompt, &mut input);
-        match rep(&input, &repl_env) {
+        match rep(&input, &mut repl_env) {
             Ok(result) => println!("{}", result),
             Err(MalError::ErrEmptyLine) => continue,
             Err(MalError::ErrString(why)) => println!("error : {}", why),
@@ -219,6 +206,6 @@ mod tests {
     fn test_step3_spec() {
         let lines = load_and_parse_mal_spec("step3_repl.mal").unwrap();
         let env = create_repl_env();
-        // check_against_mal_spec(&lines, &env, &rep).unwrap();
+        check_against_mal_spec(&lines, env, &|input, env| rep(input, env)).unwrap();
     }
 }
