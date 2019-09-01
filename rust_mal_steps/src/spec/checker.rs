@@ -40,6 +40,23 @@ where
                     println!("\n{}\nSHOULD BE\n{}\n", output, expected);
                 }
             }
+            MalTestingLine::InputShouldThrow(inputs) => {
+                if optional {
+                    println!("###optional###");
+                }
+                let mut output: Result<String, MalError> = Ok("".into());
+                for input in inputs {
+                    println!("#{}", input);
+                    output = rep(input, &mut env);
+                }
+                // TODO: spec error type validation
+                let matches = output.is_err();
+                assert!(
+                    matches,
+                    "\n{:?}\nSHOULD BE AN ERROR FOR INPUT\n{:?}\n",
+                    output, inputs,
+                );
+            }
         }
     }
     Ok(())

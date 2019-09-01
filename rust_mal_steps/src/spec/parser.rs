@@ -65,6 +65,16 @@ fn parse_mal_spec(mut reader: BufReader<File>) -> Result<Vec<MalTestingLine>, St
             continue;
         }
 
+        let error = line.trim_start_matches(";/.*(");
+        if error.len() != line.len() {
+            if declaring_input.is_empty() {
+                return Err(format!("no matching input for error output \"{}\"", output));
+            }
+            parsed_lines.push(MalTestingLine::InputShouldThrow(declaring_input.clone()));
+            declaring_input = vec![];
+            continue;
+        }
+
         declaring_input.push(line);
     }
     Ok(parsed_lines)

@@ -10,6 +10,12 @@ pub enum MalTestingLine {
     ToggleOptional(bool),
     /// Declare an exact input and the corresponding exact output after evaluation.
     InputShouldOutput(Vec<String>, String),
+    /// Declare an exact input and the corresponding expected error
+    /// to occur during evaluation.
+    ///
+    /// TODO: replace Result<T, String> with more granular error propagation
+    /// (eg. failure crate) to better unit test against the spec
+    InputShouldThrow(Vec<String>),
     /// (Cosmetic) Declare the current section name for the next lines.
     BeginSection(String),
 }
