@@ -2,7 +2,7 @@
 use std::fmt;
 
 use super::types::MalType::*;
-use super::types::MalValue;
+use super::types::{new_str, MalHashContainer, MalValue};
 
 impl super::types::MalType {
     pub fn pr_str(&self, print_readably: bool) -> String {
@@ -15,6 +15,7 @@ impl super::types::MalType {
             Symbol(ref string) => string.clone(),
             List(ref seq) => pr_seq(seq, print_readably, "(", ")", " "),
             Vector(ref seq) => pr_seq(seq, print_readably, "[", "]", " "),
+            Hash(ref hash) => pr_hash(hash, print_readably, "{", "}", " "),
             Function(ref data) => format!("{:?}", data),
             MalFunction(ref data) => format!("{:?}", data),
         }
@@ -43,4 +44,18 @@ fn pr_seq(seq: &[MalValue], print_readably: bool, start: &str, end: &str, sep: &
 
     string.push_str(end);
     string
+}
+
+fn pr_hash(
+    hash: &MalHashContainer,
+    print_readably: bool,
+    start: &str,
+    end: &str,
+    sep: &str,
+) -> String {
+    let list: Vec<MalValue> = hash
+        .iter()
+        .flat_map(|(k, v)| vec![new_str(k.clone()), v.clone()])
+        .collect();
+    pr_seq(&list, print_readably, start, end, sep)
 }

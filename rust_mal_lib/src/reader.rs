@@ -47,6 +47,8 @@ impl MalReader {
 
 const MATCH_TOKEN_PCRE: &str =
     r#"[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*)"#;
+const MATCH_INTEGER_LITERAL_PCRE: &str = r#"[+-]?\b[0-9]+\b"#;
+const MATCH_STRING_LITERAL_PCRE: &str = r#""(?:\\.|[^\\"])*""#;
 
 /// Construct the 'Vec' containing the tokens in the given string.
 fn tokenize(string: &str) -> Vec<String> {
@@ -73,6 +75,8 @@ fn read_form(reader: &mut MalReader) -> MalResult {
         "(" => read_list(reader),
         "]" => err_str("unexpected ']'"),
         "[" => read_vector(reader),
+        "}" => err_str("unexpected '}'"),
+        "{" => read_hash(reader),
         _ => read_atom(reader),
     }
 }
@@ -89,7 +93,9 @@ fn read_atom(reader: &mut MalReader) -> MalResult {
         Ok(types::new_true())
     } else if token == "false" {
         Ok(types::new_false())
-    } else if mal_regex!(r"[+-]?\b[0-9]+\b").is_match(token) {
+    } else if mal_regex!(MATCH_STRING_LITERAL_PCRE).is_match(token) {
+        Ok(types::new_str_from_slice(&token[1..token.len() - 1]))
+    } else if mal_regex!(MATCH_INTEGER_LITERAL_PCRE).is_match(token) {
         let integer: i32 = token.parse().ok().unwrap();
         Ok(types::new_integer(integer))
     } else {
@@ -110,22 +116,18 @@ fn read_seq(reader: &mut MalReader, start: &str, end: &str) -> Result<Vec<MalVal
         }
         None => Some("read_seq underflow".into()),
     };
-    if oerror.is_some() {
-        return Err(MalError::ErrString(oerror.unwrap()));
+    if let Some(error) = oerror {
+        return Err(MalError::ErrString(error));
     }
     let mut seq: Vec<MalValue> = vec![];
     loop {
-        {
-            let otoken = reader.peek();
-            if otoken.is_none() {
-                return Err(MalError::ErrString(format!("expected '{}', got EOF", end)));
-            } else if otoken.unwrap() == end {
-                break;
-            }
-        }
-        match read_form(reader) {
-            Ok(value) => seq.push(value),
-            Err(error) => return Err(error),
+        match reader.peek() {
+            Some(token) if token == end => break,
+            None => return Err(MalError::ErrString(format!("expected '{}', got EOF", end))),
+            _ => match read_form(reader) {
+                Ok(value) => seq.push(value),
+                Err(why) => return Err(why),
+            },
         }
     }
     reader.next();
@@ -138,4 +140,22 @@ fn read_list(reader: &mut MalReader) -> MalResult {
 
 fn read_vector(reader: &mut MalReader) -> MalResult {
     read_seq(reader, "[", "]").map(types::new_vector)
+}
+
+fn read_hash(reader: &mut MalReader) -> MalResult {
+    let mut map = types::MalHashContainer::new();
+    let seq = read_seq(reader, "{", "}")?;
+    let mut iter = seq.iter();
+    while let Some(key) = iter.next() {
+        let k = match **key {
+            types::MalType::Str(ref string) => string.clone(),
+            _ => return err_str("expected str key for hash map"),
+        };
+        let v = match iter.next() {
+            Some(next) => next,
+            None => return err_str("unbalanced hash map (key with no value)"),
+        };
+        map.insert(k, v.clone());
+    }
+    Ok(types::new_hash(map))
 }

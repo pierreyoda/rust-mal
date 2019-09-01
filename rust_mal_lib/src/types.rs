@@ -1,8 +1,11 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 
 use self::MalType::*;
 use super::env::Env;
+
+pub type MalHashContainer = HashMap<String, MalValue>;
 
 /// The different types a MAL value can take.
 #[allow(non_camel_case_types)]
@@ -15,7 +18,10 @@ pub enum MalType {
     Symbol(String),
     List(Vec<MalValue>),
     Vector(Vec<MalValue>),
+    Hash(MalHashContainer),
+    /// A native function, implemented in the host language (i.e. in Rust).
     Function(FunctionData<'static>),
+    /// A lambda function, defined in Make A Lisp.
     MalFunction(MalFunctionData),
 }
 
@@ -53,6 +59,7 @@ impl PartialEq for MalType {
             (&Symbol(ref a), &Symbol(ref b)) => a == b,
             (&List(ref a), &List(ref b)) => a == b,
             (&Vector(ref a), &Vector(ref b)) => a == b,
+            (&Hash(ref a), &Hash(ref b)) => a == b,
             (&Function(_), &Function(_)) => {
                 warn!("cannot compare two functions");
                 false
@@ -159,6 +166,9 @@ pub fn new_list(seq: Vec<MalValue>) -> MalValue {
 }
 pub fn new_vector(seq: Vec<MalValue>) -> MalValue {
     Rc::new(Vector(seq))
+}
+pub fn new_hash(map: MalHashContainer) -> MalValue {
+    Rc::new(Hash(map))
 }
 pub fn new_function(
     function: fn(Vec<MalValue>) -> MalResult,
