@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn test_step2_spec() {
         assert_eq!(
-            validate_against_spec::<FlatEnv, Step2Eval>("step2_repl.mal"),
+            validate_against_spec::<FlatEnv, Step2Eval>("step2_eval.mal"),
             Ok(())
         );
     }

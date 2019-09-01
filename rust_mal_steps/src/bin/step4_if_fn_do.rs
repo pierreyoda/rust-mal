@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn test_step4_spec() {
         assert_eq!(
-            validate_against_spec::<Env, Step4IfFnDo>("step4_repl.mal"),
+            validate_against_spec::<Env, Step4IfFnDo>("step4_if_fn_do.mal"),
             Ok(())
         );
     }

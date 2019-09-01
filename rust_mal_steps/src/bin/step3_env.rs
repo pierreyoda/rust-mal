@@ -203,7 +203,7 @@ mod tests {
     #[test]
     fn test_step3_spec() {
         assert_eq!(
-            validate_against_spec::<Env, Step3Env>("step3_repl.mal"),
+            validate_against_spec::<Env, Step3Env>("step3_env.mal"),
             Ok(())
         );
     }

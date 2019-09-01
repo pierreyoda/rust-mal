@@ -42,7 +42,7 @@ mod tests {
     #[test]
     fn test_step1_spec() {
         assert_eq!(
-            validate_against_spec::<Env, Step1ReadPrint>("step1_repl.mal"),
+            validate_against_spec::<Env, Step1ReadPrint>("step1_read_print.mal"),
             Ok(())
         );
     }
