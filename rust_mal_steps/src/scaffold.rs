@@ -37,7 +37,7 @@ where
                     Err(MalError::ErrString(why)) => println!("error: {}", why),
                 }
                 rl.add_history_entry(&input);
-            },
+            }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
                 break;

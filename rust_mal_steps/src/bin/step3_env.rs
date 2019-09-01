@@ -2,7 +2,8 @@ use rust_mal_lib::env::{Env, Environment};
 use rust_mal_lib::reader;
 use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{
-    err_str, err_string, new_function, new_integer, new_symbol, new_vector, new_list, MalError, MalResult, MalValue,
+    err_str, err_string, new_function, new_integer, new_list, new_symbol, new_vector, MalError,
+    MalResult, MalValue,
 };
 
 use rust_mal_steps::scaffold::*;
