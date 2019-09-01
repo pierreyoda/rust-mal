@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{MalError, MalResult, MalValue};
-use rust_mal_lib::{env::Environment, reader, readline, types};
+use rust_mal_lib::{env::Environment, reader, types};
+
+use rust_mal_steps::scaffold::*;
 
 #[derive(Clone)]
 struct FlatEnv {
@@ -26,7 +27,7 @@ impl Environment for FlatEnv {
 
     fn get_env_value(&self, key: &MalValue) -> MalResult {
         match **key {
-            Symbol(ref symbol) => match self.data.get(symbol) {
+            types::MalType::Symbol(ref symbol) => match self.data.get(symbol) {
                 Some(value) => Ok(value.clone()),
                 None => types::err_string(format!("env: cannot find {}", symbol)),
             },
@@ -36,7 +37,7 @@ impl Environment for FlatEnv {
 
     fn set_env_value(&mut self, key: MalValue, val: MalValue) -> &mut Self {
         match *key {
-            Symbol(ref symbol) => {
+            types::MalType::Symbol(ref symbol) => {
                 self.data.insert(symbol.clone(), val);
             }
             _ => panic!("step2 env: env: cannot set with a non-symbol key"),
@@ -50,6 +51,7 @@ fn read(string: &str) -> MalResult {
 }
 
 fn eval_ast(ast: MalValue, env: &impl Environment) -> MalResult {
+    use types::MalType::*;
     match *ast {
         Symbol(ref symbol) => env.get_env_value(&types::new_symbol(symbol.clone())),
         List(ref seq) | Vector(ref seq) => {
@@ -67,6 +69,8 @@ fn eval_ast(ast: MalValue, env: &impl Environment) -> MalResult {
 }
 
 fn eval(ast: MalValue, env: &impl Environment) -> MalResult {
+    use types::MalType::*;
+
     match *ast {
         List(_) => (),
         _ => return eval_ast(ast, env),
@@ -87,12 +91,6 @@ fn eval(ast: MalValue, env: &impl Environment) -> MalResult {
 
 fn print(expr: MalValue) -> String {
     expr.pr_str(true)
-}
-
-fn rep(string: &str, env: &FlatEnv) -> Result<String, MalError> {
-    let ast = read(string)?;
-    let expr = eval(ast, env)?;
-    Ok(print(expr))
 }
 
 fn int_op<F>(f: F, args: Vec<MalValue>) -> MalResult
@@ -145,50 +143,51 @@ fn div(args: Vec<MalValue>) -> MalResult {
     }
 }
 
-fn create_repl_env() -> FlatEnv {
-    let mut env = FlatEnv::new(None);
-    env.set_env_value(
-        types::new_symbol("+".into()),
-        types::new_function(add, Some(2), "+"),
-    )
-    .set_env_value(
-        types::new_symbol("-".into()),
-        types::new_function(sub, Some(2), "-"),
-    )
-    .set_env_value(
-        types::new_symbol("*".into()),
-        types::new_function(mul, Some(2), "*"),
-    )
-    .set_env_value(
-        types::new_symbol("/".into()),
-        types::new_function(div, Some(2), "/"),
-    );
-    env
+struct Step2Eval;
+impl InterpreterScaffold<FlatEnv> for Step2Eval {
+    const STEP_NAME: &'static str = "step2_eval";
+
+    fn create_env() -> Result<FlatEnv, MalError> {
+        let mut env = FlatEnv::new(None);
+        env.set_env_value(
+            types::new_symbol("+".into()),
+            types::new_function(add, Some(2), "+"),
+        )
+        .set_env_value(
+            types::new_symbol("-".into()),
+            types::new_function(sub, Some(2), "-"),
+        )
+        .set_env_value(
+            types::new_symbol("*".into()),
+            types::new_function(mul, Some(2), "*"),
+        )
+        .set_env_value(
+            types::new_symbol("/".into()),
+            types::new_function(div, Some(2), "/"),
+        );
+        Ok(env)
+    }
+
+    fn rep(input: &str, env: &FlatEnv) -> Result<String, MalError> {
+        let ast = read(input)?;
+        let expr = eval(ast, env)?;
+        Ok(print(expr))
+    }
 }
 
-fn main() {
-    let prompt = "user> ";
-    let mut input = String::new();
-    let repl_env = create_repl_env();
-    loop {
-        readline::read_line(prompt, &mut input);
-        match rep(&input, &repl_env) {
-            Ok(result) => println!("{}", result),
-            Err(MalError::ErrEmptyLine) => continue,
-            Err(MalError::ErrString(why)) => println!("error : {}", why),
-        }
-    }
+fn main() -> Result<(), String> {
+    cli_loop::<FlatEnv, Step2Eval>()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{create_repl_env, rep};
-    use rust_mal_steps::spec::{checker::check_against_mal_spec, parser::load_and_parse_mal_spec};
+    use super::*;
 
     #[test]
     fn test_step2_spec() {
-        let lines = load_and_parse_mal_spec("step2_repl.mal").unwrap();
-        let env = create_repl_env();
-        check_against_mal_spec(&lines, env, &|input, env| rep(input, env)).unwrap();
+        assert_eq!(
+            validate_against_spec::<FlatEnv, Step2Eval>("step2_repl.mal"),
+            Ok(())
+        );
     }
 }

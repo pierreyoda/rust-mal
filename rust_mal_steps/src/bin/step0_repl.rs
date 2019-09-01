@@ -1,5 +1,7 @@
-use std::io;
-use std::io::Write;
+use rust_mal_lib::env::{Env, Environment};
+use rust_mal_lib::types::MalError;
+
+use rust_mal_steps::scaffold::*;
 
 fn read(string: String) -> String {
     string
@@ -13,33 +15,36 @@ fn print(expr: String) -> String {
     expr
 }
 
-fn rep(string: &str) -> String {
-    print(eval(read(string.to_string())))
+struct Step0Repl;
+impl InterpreterScaffold<Env> for Step0Repl {
+    const STEP_NAME: &'static str = "step0_repl";
+
+    fn create_env() -> Result<Env, MalError> {
+        Ok(Environment::new(None))
+    }
+
+    fn rep(input: &str, _: &Env) -> Result<String, MalError> {
+        if input.is_empty() {
+            Err(MalError::ErrEmptyLine)
+        } else {
+            Ok(print(eval(read(input.into()))))
+        }
+    }
 }
 
-fn main() {
-    let input = &mut String::new();
-    loop {
-        input.clear();
-        print!("user> ");
-        io::stdout().flush().expect("output error");
-        io::stdin()
-            .read_line(input)
-            .expect("input : failed to read line");
-        println!("{}", rep(input));
-    }
+fn main() -> Result<(), String> {
+    cli_loop::<Env, Step0Repl>()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::rep;
-    use rust_mal_lib::env;
-    use rust_mal_steps::spec::{checker::check_against_mal_spec, parser::load_and_parse_mal_spec};
+    use super::*;
 
     #[test]
     fn test_step0_spec() {
-        let lines = load_and_parse_mal_spec("step0_repl.mal").unwrap();
-        let env = env::new(None);
-        check_against_mal_spec(&lines, env, &|input, _| Ok(rep(input))).unwrap();
+        assert_eq!(
+            validate_against_spec::<Env, Step0Repl>("step0_repl.mal"),
+            Ok(())
+        );
     }
 }

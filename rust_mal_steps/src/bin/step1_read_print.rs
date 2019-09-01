@@ -1,46 +1,49 @@
-use rust_mal_lib::{reader, readline, types};
+use rust_mal_lib::env::{Env, Environment};
+use rust_mal_lib::reader;
+use rust_mal_lib::types::{MalError, MalResult, MalValue};
 
-fn read(string: &str) -> types::MalResult {
+use rust_mal_steps::scaffold::*;
+
+fn read(string: &str) -> MalResult {
     reader::read_str(string)
 }
 
-fn eval(ast: types::MalValue) -> types::MalResult {
+fn eval(ast: MalValue) -> MalResult {
     Ok(ast)
 }
 
-fn print(expr: types::MalValue) -> String {
+fn print(expr: MalValue) -> String {
     expr.pr_str(true)
 }
 
-fn rep(string: &str) -> Result<String, types::MalError> {
-    let ast = read(string)?;
-    let expr = eval(ast)?;
-    Ok(print(expr))
+struct Step1ReadPrint;
+impl InterpreterScaffold<Env> for Step1ReadPrint {
+    const STEP_NAME: &'static str = "step1_read_print";
+
+    fn create_env() -> Result<Env, MalError> {
+        Ok(Environment::new(None))
+    }
+
+    fn rep(input: &str, _: &Env) -> Result<String, MalError> {
+        let ast = read(input)?;
+        let expr = eval(ast)?;
+        Ok(print(expr))
+    }
 }
 
-fn main() {
-    let prompt = "user> ";
-    let mut input = String::new();
-    loop {
-        readline::read_line(prompt, &mut input);
-        match rep(&input) {
-            Ok(result) => println!("{}", result),
-            Err(types::MalError::ErrEmptyLine) => continue,
-            Err(types::MalError::ErrString(why)) => println!("error : {}", why),
-        }
-    }
+fn main() -> Result<(), String> {
+    cli_loop::<Env, Step1ReadPrint>()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::rep;
-    use rust_mal_lib::env;
-    use rust_mal_steps::spec::{checker::check_against_mal_spec, parser::load_and_parse_mal_spec};
+    use super::*;
 
     #[test]
     fn test_step1_spec() {
-        let lines = load_and_parse_mal_spec("step1_repl.mal").unwrap();
-        let env = env::new(None);
-        check_against_mal_spec(&lines, env, &|input, _| rep(input)).unwrap();
+        assert_eq!(
+            validate_against_spec::<Env, Step1ReadPrint>("step1_repl.mal"),
+            Ok(())
+        );
     }
 }

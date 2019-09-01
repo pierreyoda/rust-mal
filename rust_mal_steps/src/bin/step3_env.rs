@@ -1,9 +1,11 @@
-use rust_mal_lib::env::Environment;
+use rust_mal_lib::env::{Env, Environment};
+use rust_mal_lib::reader;
 use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{
-    err_str, err_string, new_function, new_integer, new_symbol, MalError, MalResult, MalValue,
+    err_str, err_string, new_function, new_integer, new_symbol, new_vector, new_list, MalError, MalResult, MalValue,
 };
-use rust_mal_lib::{env, reader, readline, types};
+
+use rust_mal_steps::scaffold::*;
 
 fn read(string: &str) -> MalResult {
     reader::read_str(string)
@@ -18,8 +20,8 @@ fn eval_ast(ast: MalValue, env: &mut impl Environment) -> MalResult {
                 ast_ev.push(eval(value.clone(), env)?);
             }
             Ok(match *ast {
-                List(_) => types::new_list(ast_ev),
-                _ => types::new_vector(ast_ev),
+                List(_) => new_list(ast_ev),
+                _ => new_vector(ast_ev),
             })
         }
         _ => Ok(ast.clone()),
@@ -104,7 +106,7 @@ fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
     let list_ev = eval_ast(ast.clone(), env)?;
     let items = match *list_ev {
         List(ref seq) => seq,
-        _ => return types::err_str("can only apply on a list"),
+        _ => return err_str("can only apply on a list"),
     };
     if items.is_empty() {
         return Ok(list_ev.clone());
@@ -115,12 +117,6 @@ fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
 
 fn print(expr: MalValue) -> String {
     expr.pr_str(true)
-}
-
-fn rep(string: &str, env: &mut impl Environment) -> Result<String, MalError> {
-    let ast = read(string)?;
-    let expr = eval(ast, env)?;
-    Ok(print(expr))
 }
 
 fn int_op<F>(f: F, args: Vec<MalValue>) -> MalResult
@@ -164,7 +160,7 @@ fn div(args: Vec<MalValue>) -> MalResult {
                 if right == 0 {
                     err_str("cannot divide by 0")
                 } else {
-                    Ok(types::new_integer(left / right))
+                    Ok(new_integer(left / right))
                 }
             }
             _ => err_str("right argument must be an integer"),
@@ -173,39 +169,41 @@ fn div(args: Vec<MalValue>) -> MalResult {
     }
 }
 
-fn create_repl_env() -> env::Env {
-    let mut repl_env = env::new(None);
-    repl_env
-        .set_env_value(new_symbol("+".into()), new_function(add, Some(2), "+"))
-        .set_env_value(new_symbol("-".into()), new_function(sub, Some(2), "-"))
-        .set_env_value(new_symbol("*".into()), new_function(mul, Some(2), "*"))
-        .set_env_value(new_symbol("/".into()), new_function(div, Some(2), "/"));
-    repl_env
+struct Step3Env;
+impl InterpreterScaffold<Env> for Step3Env {
+    const STEP_NAME: &'static str = "step3_env";
+
+    fn create_env() -> Result<Env, MalError> {
+        let mut repl_env: Env = Environment::new(None);
+        repl_env
+            .set_env_value(new_symbol("+".into()), new_function(add, Some(2), "+"))
+            .set_env_value(new_symbol("-".into()), new_function(sub, Some(2), "-"))
+            .set_env_value(new_symbol("*".into()), new_function(mul, Some(2), "*"))
+            .set_env_value(new_symbol("/".into()), new_function(div, Some(2), "/"));
+        Ok(repl_env)
+    }
+
+    fn rep(input: &str, env: &Env) -> Result<String, MalError> {
+        let ast = read(input)?;
+        let mut local_env = env.new_inner();
+        let expr = eval(ast, &mut local_env)?;
+        Ok(print(expr))
+    }
 }
 
-fn main() {
-    let prompt = "user> ";
-    let mut input = String::new();
-    let mut repl_env = create_repl_env();
-    loop {
-        readline::read_line(prompt, &mut input);
-        match rep(&input, &mut repl_env) {
-            Ok(result) => println!("{}", result),
-            Err(MalError::ErrEmptyLine) => continue,
-            Err(MalError::ErrString(why)) => println!("error : {}", why),
-        }
-    }
+fn main() -> Result<(), String> {
+    cli_loop::<Env, Step3Env>()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{create_repl_env, rep};
-    use rust_mal_steps::spec::{checker::check_against_mal_spec, parser::load_and_parse_mal_spec};
+    use super::*;
 
     #[test]
     fn test_step3_spec() {
-        let lines = load_and_parse_mal_spec("step3_repl.mal").unwrap();
-        let env = create_repl_env();
-        check_against_mal_spec(&lines, env, &|input, env| rep(input, env)).unwrap();
+        assert_eq!(
+            validate_against_spec::<Env, Step3Env>("step3_repl.mal"),
+            Ok(())
+        );
     }
 }

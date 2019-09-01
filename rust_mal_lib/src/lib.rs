@@ -18,12 +18,13 @@ pub mod readline {
     use std::io;
     use std::io::Write;
 
+    /// Basic CLI readline utility.
     pub fn read_line(prompt: &str, input: &mut String) {
         input.clear();
         print!("{}", prompt);
-        io::stdout().flush().expect("readline : output error");
+        io::stdout().flush().expect("readline: output error");
         io::stdin()
             .read_line(input)
-            .expect("readline : failed to read line");
+            .expect("readline: failed to read line");
     }
 }

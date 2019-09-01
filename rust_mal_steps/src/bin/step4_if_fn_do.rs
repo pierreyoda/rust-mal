@@ -1,13 +1,13 @@
-use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{
-    err_str, new_function, new_list, new_mal_function, new_str, new_symbol, MalError, MalResult,
-    MalValue,
+    err_str, new_function, new_list, new_mal_function, new_nil, new_str, new_symbol, new_vector,
+    MalError, MalResult, MalType::*, MalValue,
 };
 use rust_mal_lib::{
     core,
     env::{Env, Environment},
-    reader, readline, types,
+    reader,
 };
+use rust_mal_steps::scaffold::*;
 
 fn read(string: &str) -> MalResult {
     reader::read_str(string)
@@ -22,8 +22,8 @@ fn eval_ast(ast: MalValue, env: &Env) -> MalResult {
                 ast_ev.push(eval(value.clone(), env.clone())?);
             }
             Ok(match *ast {
-                List(_) => types::new_list(ast_ev),
-                _ => types::new_vector(ast_ev),
+                List(_) => new_list(ast_ev),
+                _ => new_vector(ast_ev),
             })
         }
         _ => Ok(ast.clone()),
@@ -64,7 +64,7 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                         return if args.len() == 4 {
                             eval(args[3].clone(), env.clone())
                         } else {
-                            Ok(types::new_nil())
+                            Ok(new_nil())
                         }
                     }
                     _ => return eval(args[2].clone(), env.clone()),
@@ -160,52 +160,46 @@ fn print(expr: MalValue) -> String {
     expr.pr_str(true)
 }
 
-fn rep(string: &str, env: &Env) -> Result<String, MalError> {
-    let ast = read(string)?;
-    let expr = eval(ast, env.clone())?;
-    Ok(print(expr))
-}
+struct Step4IfFnDo;
+impl InterpreterScaffold<Env> for Step4IfFnDo {
+    const STEP_NAME: &'static str = "step4_if_fn_do";
 
-fn create_repl_env() -> Result<Env, MalError> {
-    let mut repl_env: Env = Environment::new(None);
-    for (symbol_string, core_function_value) in core::ns() {
-        repl_env.set_env_value(new_symbol(symbol_string), core_function_value);
-    }
-    repl_env.set_env_value(
-        new_symbol("prn".into()),
-        new_function(
-            |v: Vec<MalValue>| Ok(new_str(print(v[0].clone()))),
-            Some(1),
-            "prn",
-        ),
-    );
-    rep("(def! not (fn* (x) (if x false true)))", &repl_env)?;
-    Ok(repl_env)
-}
-
-fn main() {
-    let prompt = "user> ";
-    let mut input = String::new();
-    let repl_env = create_repl_env().unwrap();
-    loop {
-        readline::read_line(prompt, &mut input);
-        match rep(&input, &repl_env) {
-            Ok(result) => println!("{}", result),
-            Err(MalError::ErrEmptyLine) => continue,
-            Err(MalError::ErrString(why)) => println!("error : {}", why),
+    fn create_env() -> Result<Env, MalError> {
+        let mut repl_env: Env = Environment::new(None);
+        for (symbol_string, core_function_value) in core::ns() {
+            repl_env.set_env_value(new_symbol(symbol_string), core_function_value);
         }
+        repl_env.set_env_value(
+            new_symbol("prn".into()),
+            new_function(
+                |v: Vec<MalValue>| Ok(new_str(print(v[0].clone()))),
+                Some(1),
+                "prn",
+            ),
+        );
+        Self::rep("(def! not (fn* (x) (if x false true)))", &repl_env)?;
+        Ok(repl_env)
     }
+
+    fn rep(input: &str, env: &Env) -> Result<String, MalError> {
+        let ast = read(input)?;
+        let expr = eval(ast, env.clone())?;
+        Ok(print(expr))
+    }
+}
+
+fn main() -> Result<(), String> {
+    cli_loop::<Env, Step4IfFnDo>()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{create_repl_env, rep};
-    use rust_mal_steps::spec::{checker::check_against_mal_spec, parser::load_and_parse_mal_spec};
-
+    use super::*;
     #[test]
     fn test_step4_spec() {
-        let lines = load_and_parse_mal_spec("step4_repl.mal").unwrap();
-        let env = create_repl_env().unwrap();
-        check_against_mal_spec(&lines, env, &|input, env| rep(input, env)).unwrap();
+        assert_eq!(
+            validate_against_spec::<Env, Step4IfFnDo>("step4_repl.mal"),
+            Ok(())
+        );
     }
 }

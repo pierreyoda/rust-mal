@@ -1,6 +1,7 @@
 pub mod checker;
 pub mod parser;
 
+/// A single decoded line in a Make A Lisp reference spec.
 #[derive(Clone, Debug)]
 pub enum MalTestingLine {
     /// Set all the following lines in the current file as optional or not.
