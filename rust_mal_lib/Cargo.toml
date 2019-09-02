@@ -10,3 +10,4 @@ path = "src/lib.rs"
 [dependencies]
 regex = "1.2.1"
 log = "0.4.8"
+lazy_static = "1.4.0"

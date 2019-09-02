@@ -7,6 +7,8 @@ macro_rules! mal_regex {
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 pub mod core;
 pub mod env;

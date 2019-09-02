@@ -1,8 +1,19 @@
+use std::collections::HashMap;
 /// Module allowing to display an AST of 'MalValue'.
 use std::fmt;
 
 use super::types::MalType::*;
 use super::types::{new_str, MalHashContainer, MalValue};
+
+lazy_static! {
+    static ref STR_ESCAPED_CHARS_MAP: HashMap<char, &'static str> = {
+        let mut m = HashMap::new();
+        m.insert('"', "\\\"");
+        m.insert('\n', "\\n");
+        m.insert('\\', "\\\\");
+        m
+    };
+}
 
 impl super::types::MalType {
     pub fn pr_str(&self, print_readably: bool) -> String {
@@ -11,7 +22,21 @@ impl super::types::MalType {
             True => "true".to_string(),
             False => "false".to_string(),
             Integer(integer) => integer.to_string(),
-            Str(ref string) => string.clone(),
+            Str(ref string) => {
+                if print_readably {
+                    let escaped = string
+                        .chars()
+                        .map(|c| match STR_ESCAPED_CHARS_MAP.get(&c) {
+                            Some(escaped_char) => escaped_char.to_string(),
+                            None => c.to_string(),
+                        })
+                        .collect::<Vec<String>>()
+                        .join("");
+                    format!("\"{}\"", escaped)
+                } else {
+                    string.clone()
+                }
+            }
             Symbol(ref string) => string.clone(),
             List(ref seq) => pr_seq(seq, print_readably, "(", ")", " "),
             Vector(ref seq) => pr_seq(seq, print_readably, "[", "]", " "),
