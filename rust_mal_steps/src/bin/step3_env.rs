@@ -12,13 +12,13 @@ fn read(string: &str) -> MalResult {
     reader::read_str(string)
 }
 
-fn eval_ast(ast: MalValue, env: &mut impl Environment) -> MalResult {
+fn eval_ast(ast: MalValue, env: &Env) -> MalResult {
     match *ast {
         Symbol(_) => env.get_env_value(&ast),
         List(ref seq) | Vector(ref seq) => {
             let mut ast_ev = vec![];
             for value in seq {
-                ast_ev.push(eval(value.clone(), env)?);
+                ast_ev.push(eval(value.clone(), env.clone())?);
             }
             Ok(match *ast {
                 List(_) => new_list(ast_ev),
@@ -29,7 +29,7 @@ fn eval_ast(ast: MalValue, env: &mut impl Environment) -> MalResult {
     }
 }
 
-fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
+fn eval(ast: MalValue, mut env: Env) -> MalResult {
     let ast_temp = ast.clone();
     let (arg0_symbol, args): (Option<&str>, &Vec<MalValue>) = match *ast_temp {
         List(ref seq) => {
@@ -41,7 +41,7 @@ fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
                 _ => (None, seq),
             }
         }
-        _ => return eval_ast(ast, env),
+        _ => return eval_ast(ast, &env),
     };
 
     if let Some(slice) = arg0_symbol {
@@ -53,10 +53,9 @@ fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
                     return err_str("wrong arity for \"def!\", should be 2");
                 }
                 let key = args[1].clone();
-                let value = eval(args[2].clone(), env)?;
+                let value = eval(args[2].clone(), env.clone())?;
                 match *key {
                     Symbol(_) => {
-                        println!("deffffffff {:?} {:?}", key, value);
                         env.set_env_value(key, value.clone());
                         return Ok(value);
                     }
@@ -88,7 +87,7 @@ fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
                             let expr = it.next().unwrap();
                             match **key {
                                 Symbol(_) => {
-                                    let value = eval(expr.clone(), &mut env_let)?;
+                                    let value = eval(expr.clone(), env_let.clone())?;
                                     env_let.set_env_value(key.clone(), value);
                                 }
                                 _ => return err_str("non-symbol key in the let* binding list"),
@@ -97,14 +96,14 @@ fn eval(ast: MalValue, env: &mut impl Environment) -> MalResult {
                     }
                     _ => return err_str("let* with non-list binding"),
                 }
-                return eval(args[2].clone(), &mut env_let);
+                return eval(args[2].clone(), env_let.clone());
             }
             // otherwise : apply the first item to the other
             _ => (),
         }
     }
 
-    let list_ev = eval_ast(ast.clone(), env)?;
+    let list_ev = eval_ast(ast.clone(), &env)?;
     let items = match *list_ev {
         List(ref seq) => seq,
         _ => return err_str("can only apply on a list"),
@@ -186,8 +185,7 @@ impl InterpreterScaffold<Env> for Step3Env {
 
     fn rep(input: &str, env: &Env) -> Result<String, MalError> {
         let ast = read(input)?;
-        let mut local_env = env.new_inner();
-        let expr = eval(ast, &mut local_env)?;
+        let expr = eval(ast, env.clone())?;
         Ok(print(expr))
     }
 }
