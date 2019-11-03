@@ -26,6 +26,7 @@
   "plugins": [
     "@typescript-eslint",
     "react",
+    "react-hooks",
     "prettier"
     // "emotion"
   ],
@@ -40,10 +41,16 @@
         ]
       }
     ],
+    "react/jsx-props-no-spreading": "off",
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-member-accessibility": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
+    "quotes": "off",
+    "@typescript-eslint/quotes": [
+      "error",
+      "double"
+    ],
     "indent": [
       "error",
       2
@@ -52,15 +59,15 @@
       "error",
       "unix"
     ],
-    "quotes": [
-      "error",
-      "double"
-    ],
     "semi": [
       "error",
       "always"
     ],
     "object-curly-newline": "off",
+    "arrow-parens": [
+      "error",
+      "as-needed"
+    ],
     "jsx-a11y/anchor-is-valid": [
       "error",
       {
