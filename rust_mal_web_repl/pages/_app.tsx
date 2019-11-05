@@ -1,6 +1,7 @@
 import React from "react";
 import NextApp, { AppContext, AppInitialProps } from "next/app";
 
+import "@/assets/styles/tailwind.css";
 import MainLayout from "@/layouts/main";
 
 export default class RustMalWebApp extends NextApp {

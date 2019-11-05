@@ -1,7 +1,8 @@
 const path = require("path");
+const withCSS = require("@zeit/next-css");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
-module.exports = () => ({
+module.exports = () => withCSS({
   webpack: config => ({
     ...config,
     resolve: {
@@ -20,7 +21,7 @@ module.exports = () => ({
         // the available set of arguments.
         //
         // Default arguments are `--typescript --target browser --mode normal`.
-        extraArgs: "--no-typescript",
+        // extraArgs: "",
 
         // Optional array of absolute paths to directories, changes to which
         // will trigger the build.

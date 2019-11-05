@@ -27,8 +27,8 @@
     "@typescript-eslint",
     "react",
     "react-hooks",
-    "prettier"
-    // "emotion"
+    "prettier",
+    "emotion"
   ],
   "rules": {
     "react/jsx-filename-extension": [
@@ -58,6 +58,17 @@
     "linebreak-style": [
       "error",
       "unix"
+    ],
+    "operator-linebreak": [
+      "error",
+      "before",
+      {
+        "overrides": {
+          "||": "after",
+          "&&": "after",
+          "=": "after"
+        }
+      }
     ],
     "semi": [
       "error",
