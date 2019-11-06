@@ -24,6 +24,7 @@ where
                 let mut output = String::new();
                 if optional {
                     println!("###optional###");
+                    continue;
                 }
                 for input in inputs {
                     println!("#{}", input);
