@@ -42,6 +42,8 @@
       }
     ],
     "react/jsx-props-no-spreading": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-member-accessibility": "off",
@@ -53,7 +55,10 @@
     ],
     "indent": [
       "error",
-      2
+      2,
+      {
+        "SwitchCase": 1
+      }
     ],
     "linebreak-style": [
       "error",
@@ -79,6 +84,8 @@
       "error",
       "as-needed"
     ],
+    "implicit-arrow-linebreak": "off",
+    "no-confusing-arrow": "off",
     "jsx-a11y/anchor-is-valid": [
       "error",
       {

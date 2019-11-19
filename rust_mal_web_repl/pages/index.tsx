@@ -1,38 +1,46 @@
 import React from "react";
 import { NextPage } from "next";
 
-const Home: NextPage<{ rustMessage: string }> = ({ rustMessage }) => (
-  <div className="hero">
-    <h1 className="title">Welcome to Next.js!</h1>
-    <p className="description">
-      Hello from Rust:
-      <code>{rustMessage}</code>
-    </p>
-    <style jsx>
-      {`
-    .hero {
-      width: 100%;
-      color: #333;
-    }
-    .title {
-      margin: 0;
-      width: 100%;
-      padding-top: 80px;
-      line-height: 1.15;
-      font-size: 48px;
-    }
-    .title,
-    .description {
-      text-align: center;
-    }
-  `}
-    </style>
+import ReplConsole from "@/components/repl/ReplConsole";
+import InterpreterContext, { MalInterpreterVm, MalInterpreterRepOutput } from "@/components/vm/InterpreterContext";
+
+const mockVm: MalInterpreterVm = {
+  version() {
+    return "[front-end mock]";
+  },
+  rep(input) {
+    const trimmed = input.trim();
+    const result: MalInterpreterRepOutput = !trimmed
+      ? { type: "empty" }
+      : input.startsWith("(") && input.endsWith(")")
+        ? { type: "result", text: `(mock) > ${input}` }
+        : { type: "error", text: "error: does not look like Lisp" };
+    const mockedDelayMs = 200 + Math.random() * 1000;
+    return new Promise(resolve => setTimeout(() => resolve(result), mockedDelayMs));
+  },
+};
+
+const testConsoleInitialPrompts = [
+  `rust-mal v.${mockVm.version()}`,
+  "second prompt line",
+];
+
+const Home: NextPage = () => (
+  <div className="w-full h-full bg-gray-500 flex flex-col items-stretch">
+    <h1 className="text-4xl text-orange-300 text-center">
+      rust-mal Web REPL
+    </h1>
+    <div className="flex-grow">
+      <InterpreterContext.Provider value={mockVm}>
+        <ReplConsole initialPrompt={testConsoleInitialPrompts} />
+      </InterpreterContext.Provider>
+    </div>
   </div>
 );
 
-Home.getInitialProps = async () => {
-  const { greet } = await import("../../rust_mal_lib_wasm/pkg");
-  return { rustMessage: greet() };
-};
+// TODO: fix Rust setup
+// Home.getInitialProps = async () => ({
+//   vm: mockVm,
+// });
 
 export default Home;
