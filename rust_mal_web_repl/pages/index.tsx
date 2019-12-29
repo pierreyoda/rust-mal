@@ -15,7 +15,7 @@ const mockVm: MalInterpreterVm = {
       : input.startsWith("(") && input.endsWith(")")
         ? { type: "result", text: `(mock) > ${input}` }
         : { type: "error", text: "error: does not look like Lisp" };
-    const mockedDelayMs = 200 + Math.random() * 1000;
+    const mockedDelayMs = 100 + Math.random() * 300;
     return new Promise(resolve => setTimeout(() => resolve(result), mockedDelayMs));
   },
 };

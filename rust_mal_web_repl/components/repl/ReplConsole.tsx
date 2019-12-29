@@ -74,7 +74,7 @@ const ReplConsole: FunctionComponent<ReplConsoleProps> = ({
 
   // VM
   const vm: MalInterpreterVm | null = useContext(InterpreterContext);
-  const loading = useMemo(() => valueIsDefined(vm), [vm]); // TODO: look into Suspence
+  const loading = useMemo(() => valueIsDefined(vm), [vm]); // TODO: look into React Suspense
 
   const onCurrentInputChange = useCallback(
     (input: string) => dispatch({ type: "current-prompt-input", payload: { input } }),

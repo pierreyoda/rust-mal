@@ -1,27 +1,24 @@
 import React from "react";
 import Link from "next/link";
 
-const links = [
-  { href: "https://zeit.co/now", label: "ZEIT" },
-  { href: "https://github.com/zeit/next.js", label: "GitHub" },
-].map(link => ({
-  ...link,
-  key: `nav-link-${link.href}-${link.label}`,
-}));
-
 const Nav = () => (
-  <nav>
-    <ul>
+  <nav className="w-full flex px-6 py-2">
+    <ul className="flex-grow flex items-center justify-between">
       <li>
         <Link href="/">
           <a>Home</a>
         </Link>
       </li>
-      {links.map(({ key, href, label }) => (
-        <li key={key}>
-          <a href={href}>{label}</a>
-        </li>
-      ))}
+      <li>
+        <Link href="/about">
+          <a>About</a>
+        </Link>
+      </li>
+      <li>
+        <Link href="https://github.com/pierreyoda/rust-mal" prefetch={false}>
+          <a target="_blank" rel="noopener">GitHub</a>
+        </Link>
+      </li>
     </ul>
   </nav>
 );
