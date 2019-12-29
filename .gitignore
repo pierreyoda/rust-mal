@@ -1,15 +1,3 @@
-# Compiled files
-*.o
-*.so
-*.rlib
-*.dll
-
-# Project files
-.vscode
-
-# Executables
-*.exe
-
 # steps REPL history
 history-*.txt
 
