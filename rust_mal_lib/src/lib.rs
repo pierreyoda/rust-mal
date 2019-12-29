@@ -30,3 +30,11 @@ pub mod readline {
             .expect("readline: failed to read line");
     }
 }
+
+pub mod output {
+    use log::warn;
+
+    pub fn warning(message: &str) {
+        warn!("{}", message);
+    }
+}

@@ -1,10 +1,10 @@
 use rust_mal_lib::env::{Env, Environment};
 use rust_mal_lib::reader;
-use rust_mal_lib::types::MalType::*;
 use rust_mal_lib::types::{
-    err_str, err_string, new_function, new_integer, new_list, new_symbol, new_vector, MalError,
-    MalResult, MalValue,
+    err_str, err_string, new_nil, new_function, new_integer, new_list, new_symbol, new_vector, MalError,
+    MalResult, MalValue, MalType::*,
 };
+use rust_mal_lib::output;
 
 use rust_mal_steps::scaffold::*;
 
@@ -53,7 +53,14 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                     return err_str("wrong arity for \"def!\", should be 2");
                 }
                 let key = args[1].clone();
-                let value = eval(args[2].clone(), env.clone())?;
+                let value = match eval(args[2].clone(), env.clone()) {
+                    Ok(result) => result,
+                    Err(why) => {
+                        // abort without failure
+                        output::warning(&format!("evaluation error for \"def!\": {:?}", why));
+                        return Ok(new_nil());
+                    },
+                };
                 match *key {
                     Symbol(_) => {
                         env.set_env_value(key, value.clone());
