@@ -5,8 +5,7 @@ use rust_mal_lib::types::{
 use rust_mal_lib::{
     core,
     env::{Env, Environment},
-    reader,
-    output,
+    output, reader,
 };
 use rust_mal_steps::scaffold::*;
 
@@ -84,7 +83,7 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                         // abort without failure
                         output::warning(&format!("evaluation error for \"def!\": {:?}", why));
                         return Ok(new_nil());
-                    },
+                    }
                 };
                 match *key {
                     Symbol(_) => {

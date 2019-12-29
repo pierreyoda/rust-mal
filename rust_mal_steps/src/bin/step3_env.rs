@@ -1,10 +1,10 @@
 use rust_mal_lib::env::{Env, Environment};
+use rust_mal_lib::output;
 use rust_mal_lib::reader;
 use rust_mal_lib::types::{
-    err_str, err_string, new_nil, new_function, new_integer, new_list, new_symbol, new_vector, MalError,
-    MalResult, MalValue, MalType::*,
+    err_str, err_string, new_function, new_integer, new_list, new_nil, new_symbol, new_vector,
+    MalError, MalResult, MalType::*, MalValue,
 };
-use rust_mal_lib::output;
 
 use rust_mal_steps::scaffold::*;
 
@@ -59,7 +59,7 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                         // abort without failure
                         output::warning(&format!("evaluation error for \"def!\": {:?}", why));
                         return Ok(new_nil());
-                    },
+                    }
                 };
                 match *key {
                     Symbol(_) => {
