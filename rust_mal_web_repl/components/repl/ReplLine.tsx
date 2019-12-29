@@ -1,5 +1,7 @@
 import React, {
+  useRef,
   useMemo,
+  useEffect,
   useCallback,
   FormEventHandler,
   FunctionComponent,
@@ -36,6 +38,8 @@ const ReplLineActiveInput: FunctionComponent<ReplLineCurrentInputDatum> = ({
   pending,
   prompt,
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const promptDisplay = useMemo(
     () => (prompt || ReplInputDefaultPrompt)(),
     [prompt],
@@ -50,10 +54,20 @@ const ReplLineActiveInput: FunctionComponent<ReplLineCurrentInputDatum> = ({
     [value, pending, onSubmit],
   );
 
+  // auto-focus on VM result
+  useEffect(() => {
+    if (pending) {
+      inputRef.current?.blur();
+    } else {
+      inputRef.current?.focus()
+    }
+  }, [pending]);
+
   return (
     <form className="flex items-center" onSubmit={handleSubmit}>
       {promptDisplay}
       <input
+        ref={inputRef}
         value={value}
         onChange={e => onChange(e.target.value)}
         disabled={pending}
