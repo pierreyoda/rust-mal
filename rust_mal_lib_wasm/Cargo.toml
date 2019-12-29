@@ -11,4 +11,4 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 rust-mal-lib = { path = "../rust_mal_lib" }
-wasm-bindgen="0.2.50"
+wasm-bindgen="0.2.56"

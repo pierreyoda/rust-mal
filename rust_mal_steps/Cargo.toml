@@ -9,4 +9,4 @@ path = "src/lib.rs"
 
 [dependencies]
 rust-mal-lib = { path = "../rust_mal_lib" }
-rustyline = "5.0.2"
+rustyline = "5.0.5"
