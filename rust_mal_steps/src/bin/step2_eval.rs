@@ -77,7 +77,7 @@ fn eval(ast: MalValue, env: &impl Environment) -> MalResult {
     }
 
     // ast is a list : apply the first item to the other
-    let list_ev = eval_ast(ast.clone(), env)?;
+    let list_ev = eval_ast(ast, env)?;
     let items = match *list_ev {
         List(ref seq) => seq,
         _ => return types::err_str("can only apply on a List"),

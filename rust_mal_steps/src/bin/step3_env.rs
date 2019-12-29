@@ -96,14 +96,14 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                     }
                     _ => return err_str("let* with non-list binding"),
                 }
-                return eval(args[2].clone(), env_let.clone());
+                return eval(args[2].clone(), env_let);
             }
             // otherwise : apply the first item to the other
             _ => (),
         }
     }
 
-    let list_ev = eval_ast(ast.clone(), &env)?;
+    let list_ev = eval_ast(ast, &env)?;
     let items = match *list_ev {
         List(ref seq) => seq,
         _ => return err_str("can only apply on a list"),

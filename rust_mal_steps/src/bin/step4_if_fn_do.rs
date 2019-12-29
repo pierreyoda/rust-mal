@@ -62,12 +62,12 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                 match *eval(args[1].clone(), env.clone())? {
                     False | Nil => {
                         return if args.len() == 4 {
-                            eval(args[3].clone(), env.clone())
+                            eval(args[3].clone(), env)
                         } else {
                             Ok(new_nil())
                         }
                     }
-                    _ => return eval(args[2].clone(), env.clone()),
+                    _ => return eval(args[2].clone(), env),
                 }
             }
             // (def! key value) ; key must be a Symbol
@@ -120,7 +120,7 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                     }
                     _ => return err_str("let* with non-list binding"),
                 }
-                return eval(args[2].clone(), env_let.clone());
+                return eval(args[2].clone(), env_let);
             }
             // (fn* (args...) exp)
             "fn*" => {
@@ -134,7 +134,7 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
                 }
                 return Ok(new_mal_function(
                     self::eval,
-                    env.clone(),
+                    env,
                     args[1].clone(),
                     args[2].clone(),
                 ));
@@ -144,7 +144,7 @@ fn eval(ast: MalValue, mut env: Env) -> MalResult {
         }
     }
 
-    let list_ev = eval_ast(ast.clone(), &env)?;
+    let list_ev = eval_ast(ast, &env)?;
     let items = match *list_ev {
         List(ref seq) => seq,
         _ => return err_str("can only apply on a list"),
