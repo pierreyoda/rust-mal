@@ -14,10 +14,10 @@ module.exports = () => withCSS({
     },
     plugins: [
       ...config.plugins,
-      // new WasmPackPlugin({
-      // https://rustwasm.github.io/wasm-pack/book/commands/build.html
-      //   crateDirectory: path.resolve(__dirname, "../rust_mal_lib_wasm"),
-      // }),
+      new WasmPackPlugin({
+        // https://rustwasm.github.io/wasm-pack/book/commands/build.html
+        crateDirectory: path.resolve(__dirname, "../rust_mal_lib_wasm"),
+      }),
     ],
     node: {
       fs: "empty", // Fixes npm packages that depend on `fs` module
